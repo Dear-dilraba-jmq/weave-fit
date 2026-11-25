@@ -1,0 +1,23 @@
+{
+  "name": "outfit-mirror-independent",
+  "version": "1.2.0",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.cjs",
+    "test": "node --test test/*.test.cjs",
+    "test:all": "node scripts/run-checks.cjs",
+    "diagnose": "node scripts/diagnose.cjs",
+    "backup": "node scripts/backup-database.cjs",
+    "recover-account": "node scripts/reset-local-password.cjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "sharp": "~0.34.5"
+  },
+  "devDependencies": {
+    "jsdom": "31.0.1"
+  }
+}

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f5ee">
+  <meta name="description" content="穿搭魔镜 Weave Fit：整理你的衣橱，按季节与温度寻找灵感。上装、下装、鞋子，左右滑动搭出自己的风格。">
+  <title>穿搭魔镜 · Weave Fit</title>
+  <link rel="icon" href="./outfit-independent/public/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./homepage/home.css">
+  <script src="./outfit-independent/public/look-reference.js" defer></script>
+  <script src="./homepage/home.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <header class="header wrap">
+    <a class="brand" href="#"><span class="brand-icon" aria-hidden="true">W</span><span>穿搭魔镜<small>WEAVE FIT</small></span></a>
+    <nav aria-label="主导航"><a href="#features">功能</a><a href="#demo">搭配演示</a><a class="nav-source" href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> YOUR WARDROBE, YOUR WAY</p>
+        <h1>把今天，<br>穿成<em>喜欢的样子。</em></h1>
+        <p class="lead">衣橱里的熟悉单品，也能搭出新鲜感。<br>跟着季节找灵感，或左右滑一滑，自己决定今天怎么穿。</p>
+        <div class="hero-actions"><a class="button primary" href="#demo">试试搭配演示</a><a class="button secondary" href="#start">运行完整 App</a></div>
+        <p class="hero-note">给 20–30 岁的日常，一点轻松的穿衣灵感。</p>
+      </div>
+      <div class="hero-art" aria-label="米白针织衫、浅蓝牛仔裤与白色运动鞋的搭配参考">
+        <div class="art-circle"></div><span class="art-note">a little inspiration<br>for your everyday</span>
+        <figure class="hero-piece knit"><img src="./outfit-independent/public/reference-cream-knit-v1.png" alt="米白圆领针织衫参考" width="1254" height="1254"><figcaption>soft cream</figcaption></figure>
+        <figure class="hero-piece jeans"><img src="./outfit-independent/public/reference-light-blue-jeans-v1.png" alt="浅蓝直筒牛仔裤参考" width="1254" height="1254"><figcaption>easy blue</figcaption></figure>
+        <figure class="hero-piece sneakers"><img src="./outfit-independent/public/reference-white-sneakers-v1.png" alt="白色运动鞋参考" width="1254" height="1254"><figcaption>keep it simple</figcaption></figure>
+        <span class="art-sticker">简单一点<br>好看一点</span>
+      </div>
+    </section>
+    <section class="features wrap" id="features" aria-label="项目功能">
+      <article><span class="feature-icon" aria-hidden="true">✧</span><h2>给衣橱一点秩序</h2><p>按类别整理衣服、鞋子和配饰，把常穿的那几件，变成随手可搭的灵感。</p></article>
+      <article><span class="feature-icon" aria-hidden="true">☀</span><h2>好看，也合时宜</h2><p>根据季节、实际温度和天气调整厚薄与层次，让搭配更贴近日常。</p></article>
+      <article><span class="feature-icon" aria-hidden="true">↔</span><h2>自己的风格，自己搭</h2><p>上装、下装、鞋子从上到下排列，每行独立切换，找到喜欢的组合。</p></article>
+    </section>
+    <section class="demo-section" id="demo">
+      <div class="wrap demo-layout">
+        <div class="demo-copy"><p class="eyebrow">MIX A LITTLE, FEEL DIFFERENT</p><h2>左右滑一滑，<br>今天就这样穿。</h2><p>先从下面的小演示开始。每次只换一件，看看整套搭配会有什么不同。</p><span class="demo-label">项目演示 · 无需登录</span><p class="demo-disclaimer">这里使用示例单品与 AI 款式参考图，不会读取或保存你的个人档案、照片和衣橱。</p></div>
+        <div class="demo-board" aria-label="三行手动搭配演示">
+          <div class="board-head"><span>MY DAILY COMBINATION</span><button type="button" id="resetDemo">重新搭一套</button></div>
+          <div id="demoRows"></div>
+          <div class="board-footer"><span class="mini-dot"></span><p id="demoSummary" aria-live="polite">正在准备搭配演示…</p></div>
+          <noscript><p>开启浏览器 JavaScript 后即可左右切换单品。完整源码与本地运行说明仍可查看。</p></noscript>
+        </div>
+      </div>
+    </section>
+    <section class="start wrap" id="start">
+      <div><p class="eyebrow">MAKE IT YOURS</p><h2>把完整衣橱，<br>放进自己的日常。</h2><p>这个页面是项目主页与静态演示。完整 App 提供个人账号、面部参考、照片上传、衣橱管理和搭配收藏，在你自己的后台中运行。</p><a class="text-link" href="https://github.com/Dear-dilraba-jmq/weave-fit#readme" target="_blank" rel="noopener noreferrer">查看完整项目与运行说明 ↗</a></div>
+      <div class="start-card"><h3>本地启动</h3><p>安装 Node.js 24 或更新版本，下载项目后，在项目文件夹打开终端：</p><pre><code>cd outfit-independent
+npm install
+node launch.cjs</code></pre><p class="start-tip">启动后按提示打开 App。Windows 也可在安装依赖后，双击「启动独立版.cmd」。</p><details><summary>哪些功能还需要额外配置？</summary><p>按季节温度搭配、手动组合与衣橱保存可在本地使用。衣物分割需先下载本机模型；自动生成本人的全身穿搭图、文字 AI 与淘宝真实商品卡需要各自的外部服务配置。GitHub Pages 展示本页，不运行这些后台服务。</p></details></div>
+    </section>
+  </main>
+  <footer class="footer wrap"><a class="brand" href="#">穿搭魔镜 <small>WEAVE FIT</small></a><p>穿得舒服，也穿得像自己。</p><a href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">查看源码 ↗</a></footer>
+</body>
+</html>

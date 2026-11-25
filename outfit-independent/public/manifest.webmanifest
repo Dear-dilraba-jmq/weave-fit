@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "穿搭魔镜 · 独立版",
+  "short_name": "穿搭魔镜",
+  "description": "记录身材与衣橱，按风格和场合生成整套搭配，缺的那一件帮你去淘宝找。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdf8ee",
+  "theme_color": "#fdf8ee",
+  "categories": [
+    "lifestyle",
+    "shopping"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

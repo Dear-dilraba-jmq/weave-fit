@@ -1,0 +1,129 @@
+// Optional developer check: NODE_PATH=<jsdom package directory> node test/ui-check.cjs
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {JSDOM,VirtualConsole}=require('jsdom');
+const {createApp}=require('../server.cjs');
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}throw new Error('UI condition timed out');}
+(async()=>{
+  const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'outfit-ui-check-'));
+  const app=createApp({dataDir,env:{LLM_API_BASE:'',LLM_API_KEY:'',LLM_MODEL:''}});
+  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
+  const base='http://127.0.0.1:'+app.server.address().port;
+  let cookie='',dom,failRecordReads=false,posterUploads=0;
+  const errors=[];
+  async function page(){
+    const html=fs.readFileSync(path.join(__dirname,'../public/index.html'),'utf8').replace(/<script[^>]*src="[^"]*"[^>]*><\/script>/g,'');
+    const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
+    const instance=new JSDOM(html,{url:base,runScripts:'outside-only',virtualConsole:vc});
+    const w=instance.window;
+    w.scrollTo=()=>{};w.Element.prototype.scrollIntoView=()=>{};w.confirm=()=>true;
+    w.URL.createObjectURL=URL.createObjectURL;w.URL.revokeObjectURL=URL.revokeObjectURL;
+    w.AbortController=AbortController;w.AbortSignal=AbortSignal;
+    w.OutfitImage={prepare:async file=>({blob:file}),cutout:async()=>{throw Error('模型暂时不可用（测试）');}};
+    w.OutfitLook={render:async()=>new Blob([png],{type:'image/png'})};
+    w.fetch=async(u,options={})=>{
+      const target=new URL(u,base);assert.equal(target.origin,base,'No outgoing provider requests');
+      if(failRecordReads&&target.pathname==='/api/records'&&JSON.parse(options.body||'{}').mode==='select')return Response.json({error:{message:'模拟读取失败'}},{status:503});
+      if(target.pathname==='/api/files'&&options.method==='PUT'&&String(target.searchParams.get('path')).includes('/looks/'))posterUploads++;
+      const res=await fetch(target,{...options,headers:{...options.headers,...(cookie?{Cookie:cookie}:{}),Origin:base}});
+      if(res.headers.get('set-cookie'))cookie=res.headers.get('set-cookie').split(';')[0];return res;
+    };
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/local-api.js'),'utf8'));
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/style-guide.js'),'utf8'));
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/outfit-plan.js'),'utf8'));
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/look-reference.js'),'utf8'));
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/shopping.js'),'utf8'));
+    w.eval(fs.readFileSync(path.join(__dirname,'../public/app.js'),'utf8'));
+    return instance;
+  }
+  try{
+    dom=await page();let w=dom.window,$=s=>w.document.querySelector(s);
+    await until(()=>!$('#authView').hidden);
+    $('[data-auth-mode="register"]').click();$('#localUsername').value='ui-synthetic';$('#localPassword').value='synthetic-long-password';$('#localLoginBtn').click();
+    await until(()=>!$('#appView').hidden && $('#styleChips').children.length===10);
+    assert.match($('#engineState').textContent,/规则/);
+    $('[data-nav="profile"]').click();$('#pfNickname').value='独立测试';
+    const image=new File([png],'face.png',{type:'image/png'});
+    Object.defineProperty($('#faceImage'),'files',{value:[image],configurable:true});
+    $('#faceImage').dispatchEvent(new w.Event('change',{bubbles:true}));
+    await until(()=>!$('#uploadFaceBtn').disabled);$('#uploadFaceBtn').click();
+    await until(()=>$('#faceUploadStatus').textContent.includes('已保存'));
+    assert.match($('#facePreview2 img').getAttribute('src'),/^\/api\/files/);
+    assert.equal((await w.fetch($('#facePreview2 img').getAttribute('src'))).status,200);
+    console.log('PASS: native photo selection uploads through the real independent backend');
+    $('#pfHeight').value='999';$('#saveProfileBtn').click();await until(()=>$('#profileSaveNote').textContent.includes('120–220'));
+    $('#pfHeight').value='158';$('#pfWeight').value='54';$('#saveProfileBtn').click();$('#saveProfileBtn').click();
+    await until(()=>!$('#saveProfileBtn').disabled&&$('#profileSaveNote').textContent.includes('已保存'));
+    dom.window.close();dom=await page();w=dom.window;$=s=>w.document.querySelector(s);
+    await until(()=>!$('#appView').hidden && $('#pfNickname').value==='独立测试');
+    assert.ok($('#facePreview2 img'));
+    $('[data-nav="closet"]').click();$('#openAddBtn').click();$('#itemName').value='测试衬衫';
+    Object.defineProperty($('#itemImage'),'files',{value:[new File([png],'shirt.png',{type:'image/png'})],configurable:true});
+    $('#itemImage').dispatchEvent(new w.Event('change',{bubbles:true}));await until(()=>$('#cutoutStatus').textContent.includes('保留原图')&&!$('#saveItemBtn').disabled);
+    $('#saveItemBtn').click();$('#saveItemBtn').click();await until(()=>$('#navClosetCount').textContent==='1'&&$('#addPanel').hidden);
+    const initialItem=(await (await w.fetch('/api/backup')).json()).tables.wardrobe_items[0],clothingImage=initialItem.image_path;
+    $('[data-edit]').click();assert.equal($('#itemName').value,'测试衬衫');$('#itemName').value='编辑后的测试衬衫';$('#saveItemBtn').click();
+    await until(()=>$('#addPanel').hidden&&$('#closetGrid').textContent.includes('编辑后的测试衬衫'));
+    assert.equal((await (await w.fetch('/api/backup')).json()).tables.wardrobe_items.length,1);
+    console.log('PASS: failed garment processing preserves original; duplicate save is blocked and clothing metadata can be edited');
+    $('#seasonSel').value='夏季';$('#seasonSel').dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal($('#tempRange').value,'30');assert.match($('#climateHint').textContent,/炎热/);
+    $('#seasonSel').value='冬季';$('#seasonSel').dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal($('#tempRange').value,'5');assert.match($('#climateHint').textContent,/保暖/);
+    $('#tempRange').value='22';$('#tempRange').dispatchEvent(new w.Event('input',{bubbles:true}));
+    $('[data-value="极简"]').click();
+    $('#generateBtn').click();await until(()=>!$('#resultArea').hidden);
+    assert.match($('#genStatus').textContent,/内置规则/);
+    await until(()=>$('#resultArea .shopping-message')?.textContent.includes('尚未配置'));
+    const references=Array.from(w.document.querySelectorAll('#resultArea .gap-reference img'));
+    assert.equal(references.length,w.document.querySelectorAll('#resultArea .gap').length,'Every missing basic item has a photographic AI style reference even without Taobao credentials');
+    for(const reference of references){assert.match(reference.getAttribute('src'),/^reference-.*-v1\.png$/);assert.equal((await w.fetch(reference.getAttribute('src'))).status,200);}
+    assert.ok($('#resultArea .gap-reference figcaption').textContent.includes('非真实商品'));
+    assert.match($('#resultArea a[href*="s.taobao.com/search"]').textContent,/搜索/);
+    $('[data-action="save"]').click();$('[data-action="save"]').click();await until(()=>$('#navSavedCount').textContent==='1');
+    await until(()=>!$('[data-action="save"]').disabled);$('[data-action="save"]').click();await sleep(50);
+    $('[data-nav="saved"]').click();assert.ok($('#savedGrid .saved-card'));
+    const backup=await (await w.fetch('/api/backup')).json();
+    assert.equal(backup.tables.profiles[0].nickname,'独立测试');assert.equal(backup.tables.outfits.length,1);
+    assert.equal(backup.tables.profiles[0].height_cm,158);assert.equal(backup.tables.profiles[0].weight_kg,54);
+    $('[data-nav="closet"]').click();$('[data-del]').click();await until(()=>$('#navClosetCount').textContent==='0');
+    assert.equal((await w.fetch('/api/files?path='+encodeURIComponent(clothingImage))).status,200,'deleting wardrobe item must retain photos referenced by saved outfits');
+    const saved=backup.tables.outfits[0];
+    saved.payload.tryonImage=saved.payload.lookImage;
+    await w.OutfitBackend.database.from('outfits').update({payload:saved.payload}).eq('id',saved.id).select();
+    const uploadsBeforeReload=posterUploads;dom.window.close();dom=await page();w=dom.window;$=s=>w.document.querySelector(s);
+    await until(()=>!!$('#tryonBox .tryon-image'));
+    assert.match($('#tryonBox .tryon-image').getAttribute('src'),/^\/api\/files/);
+    assert.equal($('#autoTryon').disabled,true);
+    assert.ok($('#resultArea .tryon-visual'));
+    await sleep(50);assert.equal(posterUploads,uploadsBeforeReload,'viewing a saved outfit must not generate/upload a new poster');
+    console.log('PASS: saved personal full-body image appears first after reload; missing API is clearly disabled');
+    console.log('PASS: session reload restores face photo; rules, poster storage, collection and backup work');
+    dom.window.close();failRecordReads=true;dom=await page();w=dom.window;$=s=>w.document.querySelector(s);
+    await until(()=>!$('#appLoadError').hidden);assert.equal($('#generateBtn').disabled,true);assert.equal($('#saveProfileBtn').disabled,true);
+    failRecordReads=false;$('#retryDataBtn').click();await until(()=>$('#appLoadError').hidden&&!$('#appView').hidden&&$('#pfNickname').value==='独立测试');
+    console.log('PASS: data-read failure is explicit and retry restores existing data instead of creating an empty profile');
+    $('#passwordCurrent').value='synthetic-wrong-password';$('#passwordNew').value='synthetic-new-password';$('#passwordConfirm').value='synthetic-new-password';$('#changePasswordBtn').click();
+    await until(()=>!$('#changePasswordBtn').disabled&&$('#passwordStatus').textContent.includes('不正确'));assert.equal($('#appView').hidden,false);
+    $('#passwordCurrent').value='synthetic-long-password';$('#changePasswordBtn').click();await until(()=>!$('#authView').hidden&&$('#authError').textContent.includes('密码已修改'));
+    $('[data-auth-mode="login"]').click();$('#localUsername').value='ui-synthetic';$('#localPassword').value='synthetic-new-password';$('#localLoginBtn').click();
+    await until(()=>!$('#appView').hidden&&$('#pfNickname').value==='独立测试');
+    console.log('PASS: incorrect current password keeps the session; successful password change signs out and new password logs back in');
+    // Exercise connected-source product cards separately from the deliberately unconfigured real app.
+    const productDom=new JSDOM('<div id="root"><div data-shopping-gap="0"></div></div>',{runScripts:'outside-only'});
+    try{
+      const pw=productDom.window,root=pw.document.querySelector('#root');let available=true;
+      pw.fetch=async url=>({ok:true,json:async()=>url.endsWith('/status')?{configured:true}:{data:{checkedAt:'2026-11-23T02:00:00Z',products:available?[{title:'合成测试鞋 <script>',image:'https://img.alicdn.com/test.jpg',url:'https://item.taobao.com/item.htm?id=1234567890',platform:'淘宝',shop:'合成测试店',price:'129.90'}]:[]}}});
+      pw.eval(fs.readFileSync(path.join(__dirname,'../public/shopping.js'),'utf8'));
+      pw.OutfitShopping.mount(root,{gaps:[{keyword:'白色运动鞋'}]});
+      await until(()=>root.querySelector('.product-card'));
+      assert.equal(root.querySelector('.product-card img').getAttribute('src'),'https://img.alicdn.com/test.jpg');
+      assert.equal(root.querySelector('.product-card').getAttribute('href'),'https://item.taobao.com/item.htm?id=1234567890');
+      assert.ok(root.textContent.includes('¥129.90'));assert.equal(root.querySelector('script'),null);
+      root.querySelector('img').dispatchEvent(new pw.Event('error'));assert.ok(root.textContent.includes('图片暂不可用'));
+      available=false;pw.OutfitShopping.mount(root,{gaps:[{keyword:'浅蓝牛仔裤'}]});
+      await until(()=>root.textContent.includes('暂未找到'));assert.equal(root.querySelector('.product-card'),null);
+      console.log('PASS: connected-source cards pair product images and links; image failure and empty results stay explicit (synthetic fixtures)');
+    }finally{productDom.window.close();}
+    assert.deepEqual(errors,[]);
+  } finally{dom?.window.close();await app.close();fs.rmSync(dataDir,{recursive:true,force:true});}
+})().catch(e=>{console.error(e);process.exitCode=1;});

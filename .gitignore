@@ -1,0 +1,12 @@
+**/node_modules/
+**/data/
+**/models/
+**/tools/
+**/outputs/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.sqlite*
+**/*.log
+.DS_Store
+Thumbs.db

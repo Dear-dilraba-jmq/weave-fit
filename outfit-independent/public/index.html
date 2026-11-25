@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>穿搭魔镜 · 今天穿什么，不用再想</title>
+<meta name="description" content="面向 20-30 岁的 AI 穿搭助手：记录身材与衣橱，按风格和场合生成整套搭配，缺的那一件帮你去淘宝找。">
+<meta name="theme-color" content="#fdf8ee">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="穿搭魔镜">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<script src="local-api.js"></script>
+</head>
+<body>
+
+<svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2z"/><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16z"/></symbol>
+  <symbol id="i-closet" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M12 4v16M8 9h1M15 9h1"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-hanger" viewBox="0 0 24 24"><path d="M12 7a2 2 0 1 1 2-2M12 7v2L3 15c-1 .7-.5 2.5.8 2.5h16.4c1.3 0 1.8-1.8.8-2.5L12 9"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></symbol>
+</svg>
+
+<!-- 启动态 -->
+<div id="bootView" class="boot">
+  <div class="boot-mark">穿搭魔镜</div>
+  <div class="boot-bar"><i></i></div>
+  <div class="boot-tip">正在准备你的衣橱…</div>
+</div>
+
+<!-- 登录 -->
+<div id="authView" class="auth" hidden>
+  <div class="auth-left">
+    <div class="auth-brand"><span class="brand-dot"></span> OUTFIT MIRROR</div>
+    <div class="auth-copy">
+      <div class="auth-kicker">给 20–30 岁的日常穿搭提案</div>
+      <h1>今天穿什么，<br>不用再想。</h1>
+      <p>记录身材、面部参考和衣橱，按风格、场合与温度整理搭配；缺少的单品可到淘宝搜索选购。自动本人穿搭图需配置图像服务。</p>
+    </div>
+    <div class="auth-features">
+      <div><span>01</span><b>专属档案</b><small>身高体重、肤色体型，越用越懂你</small></div>
+      <div><span>02</span><b>数字衣橱</b><small>上传衣服和配饰，随时翻出来搭</small></div>
+      <div><span>03</span><b>整套补齐</b><small>按场合生成搭配，缺口一键搜淘宝</small></div>
+    </div>
+    <div class="auth-mock">
+      <div class="mock-card"><div class="mock-swatch s1"></div><span>米白廓形衬衫</span></div>
+      <div class="mock-card"><div class="mock-swatch s2"></div><span>深灰直筒西裤</span></div>
+      <div class="mock-card"><div class="mock-swatch s3"></div><span>银色细带配饰</span></div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-head"><h2>进入你的衣橱</h2><p>独立版账号与数据保存在这台服务器，首次使用请注册。</p></div>
+      <div class="tabs" id="authModeTabs">
+        <button type="button" class="tab active" data-auth-mode="login">登录</button>
+        <button type="button" class="tab" data-auth-mode="register">注册新账号</button>
+      </div>
+      <div class="field"><label for="localUsername">账号</label><input id="localUsername" autocomplete="username" maxlength="80" placeholder="3–80 位文字或数字"></div>
+      <div class="field"><label for="localPassword">密码</label><input id="localPassword" type="password" autocomplete="current-password" minlength="10" maxlength="200" placeholder="至少 10 位，请妥善保存"></div>
+      <div id="authError" class="auth-error" hidden></div>
+      <div id="fileOpenHelp" class="auth-error" hidden>
+        <b>请通过独立版入口访问</b><br>
+        在项目文件夹双击「启动独立版.cmd」，它会启动服务并打开网页。<br>
+        服务已启动可直接 <a href="http://127.0.0.1:8090/">打开独立版</a>。
+      </div>
+      <button type="button" class="btn-primary full" id="localLoginBtn">登录</button>
+      <div class="auth-foot">登录后即可保存你的身材数据、面部参考照片与衣橱，数据仅你本人可见。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 主应用 -->
+<div id="appView" class="shell" hidden>
+  <aside class="sidebar">
+    <div class="side-brand"><span class="brand-dot"></span><div><b>穿搭魔镜</b><small>OUTFIT MIRROR</small></div></div>
+    <nav class="nav">
+      <button type="button" class="nav-item active" data-nav="today"><svg><use href="#i-spark"/></svg>今日搭配</button>
+      <button type="button" class="nav-item" data-nav="closet"><svg><use href="#i-closet"/></svg>我的衣橱<span id="navClosetCount" hidden>0</span></button>
+      <button type="button" class="nav-item" data-nav="profile"><svg><use href="#i-user"/></svg>个人档案</button>
+      <button type="button" class="nav-item" data-nav="saved"><svg><use href="#i-bookmark"/></svg>搭配收藏<span id="navSavedCount" hidden>0</span></button>
+    </nav>
+    <div class="side-tip">
+      <b>小提示</b>
+      <p>先去「我的衣橱」添几件常穿的衣服，生成的搭配会更贴合你真实拥有的单品。</p>
+    </div>
+    <div class="side-user">
+      <div class="avatar" id="sideAvatar">我</div>
+      <div class="side-user-txt"><b id="sideName">我的账号</b><small id="sideSub">已登录</small></div>
+      <button type="button" id="logoutBtn" title="退出登录"><svg><use href="#i-out"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="appLoadError" class="flow-error" role="alert" hidden><b>账号数据尚未载入</b><p id="appLoadMessage"></p><button id="retryDataBtn" type="button" class="btn-ghost">重试载入</button></div>
+    <header class="topbar">
+      <div><div class="eyebrow" id="topEyebrow">DAILY LOOK</div><h2 id="topTitle">今日搭配</h2></div>
+      <div class="top-right"><span id="topDate"></span><span class="live-dot"></span><span><span id="engineState">内置规则搭配已就绪</span></span></div>
+    </header>
+
+    <!-- 今日搭配 -->
+    <section class="page" id="page-today">
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="hero-tag">为今天的你，配一套</div>
+          <h1>风格由你定，<br><em>搭配交给我</em>。</h1>
+          <p>按风格、场合和温度，从你的衣橱挑选整套搭配；缺少的单品提供图片参考和淘宝搜索入口。</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-ring"></div>
+          <div class="art-card a1"><i></i><span>TOP</span></div>
+          <div class="art-card a2"><i></i><span>BOTTOM</span></div>
+          <div class="art-card a3"><i></i><span>ACCENT</span></div>
+        </div>
+      </div>
+
+      <div class="outfit-mode-tabs" role="tablist" aria-label="选择搭配方式">
+        <button type="button" id="autoModeTab" role="tab" aria-selected="true" aria-controls="autoBuilder" data-outfit-mode="auto" class="on">智能搭配</button>
+        <button type="button" id="manualModeTab" role="tab" aria-selected="false" aria-controls="manualBuilder" data-outfit-mode="manual" tabindex="-1">自己滑着搭</button>
+      </div>
+
+      <section id="manualBuilder" class="card manual-builder" role="tabpanel" aria-labelledby="manualModeTab" hidden>
+        <div class="manual-heading"><div><div class="eyebrow">MIX YOUR OWN</div><h3>左右滑一滑，搭出你的风格</h3><p>上装、下装、鞋子从上到下排列。每行独立左右滑，中间这件就是你的选择。</p></div><button type="button" class="btn-ghost" data-nav="closet">去衣橱添单品</button></div>
+        <div class="manual-climate">
+          <label for="manualSeason">季节<select id="manualSeason"><option>春季</option><option>夏季</option><option>秋季</option><option>冬季</option></select></label>
+          <label for="manualTemperature">温度 · °C<input id="manualTemperature" type="number" min="-10" max="40" step="1" inputmode="numeric" value="22"></label>
+          <label for="manualWeather">天气<select id="manualWeather"><option>晴</option><option>多云</option><option>阴</option><option>小雨</option><option>雨雪</option><option>大风</option></select></label>
+        </div>
+        <div class="manual-stack" id="manualRows"></div>
+        <div id="manualWarnings" class="manual-warnings" role="status" aria-live="polite"></div>
+        <div class="manual-footer"><p id="manualSummary" role="status" aria-live="polite">先从衣橱挑三件喜欢的单品</p><button type="button" class="btn-primary" id="manualApplyBtn" disabled>查看这套搭配</button></div>
+        <p class="manual-note">使用你衣橱里的单品照片；没有照片时显示款式示意。温度不合适会提醒，保留你的手选组合。查看后可收藏或导出整套参考图。</p>
+      </section>
+
+      <div class="two-col" id="autoBuilder" role="tabpanel" aria-labelledby="autoModeTab">
+        <div class="card builder">
+          <div class="card-head"><h3>设定今天的场景</h3><span class="step">STEP 01</span></div>
+          <label class="lbl">想要的风格</label>
+          <div class="chips" id="styleChips"></div>
+          <p class="style-reference-hint">「参考图风格」归纳了 17 张穿搭拼图中的复古学院、甜酷日常与清爽衬衫元素，可用于本套配色和版型。</p>
+          <label class="lbl">要出席的场合</label>
+          <div class="chips" id="occasionChips"></div>
+          <div class="row-2">
+            <div>
+              <label class="lbl" for="seasonSel">穿搭季节</label>
+              <select id="seasonSel"><option>春季</option><option>夏季</option><option>秋季</option><option>冬季</option></select>
+            </div>
+            <div>
+              <label class="lbl" for="weatherSel">天气</label>
+              <select id="weatherSel">
+                <option value="晴">晴朗</option><option value="多云">多云</option>
+                <option value="阴">阴天</option><option value="小雨">小雨</option>
+                <option value="雨雪">雨雪</option><option value="大风">大风</option>
+              </select>
+            </div>
+          </div>
+          <label class="lbl" for="tempRange">实际穿搭温度 <b id="tempVal">22°C</b></label>
+          <input type="range" id="tempRange" min="-10" max="40" value="22">
+          <p class="climate-control-hint" id="climateHint" aria-live="polite"></p>
+          <label class="lbl" for="extraInput">补充要求（可选）</label>
+          <input id="extraInput" class="inp" placeholder="例如：想显高一点、颜色别太跳、带点复古感" maxlength="120">
+
+          <div class="card-head sub"><h3>已经挑好的单品</h3><span class="step">STEP 02 · 可选</span></div>
+          <p class="hint">勾选后优先围绕这些单品搭配；与当前温度冲突的单品会提醒并换用合适款式。</p>
+          <div class="picker" id="pickerList"></div>
+
+          <button type="button" class="btn-primary full big" id="generateBtn">生成我的搭配</button>
+          <label class="tryon-consent"><input type="checkbox" id="autoTryon" disabled>同时生成我的全身穿搭图（已有衣服和待购款一起展示）</label>
+          <p class="hint" id="autoTryonInfo">正在检查图像服务…</p>
+          <div class="gen-status" id="genStatus"></div>
+        </div>
+
+        <div class="card reference">
+          <div class="card-head"><h3>我的参考</h3><span class="step">PROFILE</span></div>
+          <div class="face-wrap"><div class="face" id="facePreview"><svg><use href="#i-user"/></svg></div></div>
+          <div class="face-note" id="faceNote">还没有上传面部参考照片</div>
+          <dl class="ref-list" id="profileSummary"></dl>
+          <button type="button" class="btn-ghost full" data-nav="profile">去完善个人档案</button>
+          <div class="privacy">面部照片保存在你的私有空间，只有登录后的你本人能看到；搭配建议基于你填写的肤色、发色与体型，不会做人脸身份识别。</div>
+        </div>
+      </div>
+
+      <div id="resultArea" class="result" hidden></div>
+    </section>
+
+    <!-- 我的衣橱 -->
+    <section class="page" id="page-closet" hidden>
+      <div class="page-head">
+        <div><h3>我的数字衣橱</h3><p>把常穿的衣服、鞋子、包和配饰放进来，搭配时会优先使用它们。</p></div>
+        <button type="button" class="btn-primary" id="openAddBtn"><svg><use href="#i-plus"/></svg>添加单品</button>
+      </div>
+
+      <div class="card add-panel" id="addPanel" hidden>
+        <div class="card-head"><h3 id="itemPanelTitle">新增一件单品</h3><button id="cancelItemBtn" type="button" class="btn-ghost">取消</button></div>
+        <div class="add-grid">
+          <div class="upload-box" id="uploadBox">
+            <div class="upload-preview" id="uploadPreview"><svg><use href="#i-hanger"/></svg></div>
+            <div class="upload-txt"><b>制作白底单品图</b><small>先选类别，再上传 · 本机识别衣服，去除人物和背景</small></div>
+            <div class="upload-btns">
+              <label class="btn-mini face-picker" id="itemCameraBtn">拍照<input type="file" id="itemCamera" accept="image/*" capture="environment" aria-label="拍摄衣物照片"></label>
+              <label class="btn-mini face-picker" id="itemAlbumBtn">相册选图<input type="file" id="itemImage" accept="image/*" aria-label="从相册选择衣物照片"></label>
+            </div>
+            <div class="cutout-bar" id="cutoutBar" hidden>
+              <div class="cutout-status" id="cutoutStatus">正在智能识别衣服轮廓…</div>
+              <div class="cutout-switch">
+                <button type="button" class="on" data-cutmode="cut">白底单品图</button>
+                <button type="button" data-cutmode="raw">原图</button>
+              </div>
+              <button type="button" class="btn-mini" id="retryGarmentBtn">重新处理</button>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>名称 <input id="itemName" class="inp" placeholder="例如：米白廓形衬衫" maxlength="40"></label>
+            <label>类别 <select id="itemCategory" class="inp">
+              <option value="上装">上装</option><option value="下装">下装</option><option value="外套">外套</option>
+              <option value="连衣裙">连衣裙 / 套装</option><option value="鞋履">鞋履</option>
+              <option value="包袋">包袋</option><option value="配饰">配饰</option><option value="其他">其他</option>
+            </select></label>
+            <label>颜色 <input id="itemColor" class="inp" placeholder="例如：米白 / 藏蓝" maxlength="20"></label>
+            <label>适合季节 <select id="itemSeason" class="inp">
+              <option value="四季">四季</option><option value="春季">春季</option><option value="夏季">夏季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="春秋">春秋</option><option value="春夏">春夏</option><option value="秋冬">秋冬</option>
+            </select></label>
+            <label class="span2">风格标签（用逗号分隔） <input id="itemTags" class="inp" placeholder="例如：极简, 通勤, 宽松" maxlength="80"></label>
+            <label class="span2">备注（可选） <input id="itemNote" class="inp" placeholder="例如：版型偏长，适合塞进裤腰" maxlength="80"></label>
+          </div>
+        </div>
+        <div class="add-actions"><span class="hint" id="addHint">照片是选填的，但上传后搭配效果更直观。</span><button type="button" class="btn-primary" id="saveItemBtn">保存到衣橱</button></div>
+      </div>
+
+      <div class="closet-layout">
+        <nav class="closet-category-nav" aria-label="服装分类"><div class="chips" id="filterChips"></div></nav>
+        <div class="closet-content">
+          <div class="closet-stat" id="closetStat">共 0 件单品</div>
+          <div class="closet-grid" id="closetGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 个人档案 -->
+    <section class="page" id="page-profile" hidden>
+      <div class="page-head"><div><h3>关于你的那些细节</h3><p>这些信息只用于让搭配建议更贴合你，不会对外展示。</p></div></div>
+      <div class="two-col profile-cols">
+        <div class="card">
+          <div class="card-head"><h3>基础数据</h3><span class="step">BODY</span></div>
+          <div class="form-grid">
+            <label>昵称 <input id="pfNickname" class="inp" placeholder="怎么称呼你" maxlength="24"></label>
+            <label>性别 <select id="pfGender" class="inp"><option value="未填写">未填写</option><option value="女">女</option><option value="男">男</option><option value="不想说">不想说</option></select></label>
+            <label>身高（cm） <input id="pfHeight" class="inp" type="number" min="120" max="220" placeholder="168"></label>
+            <label>体重（kg） <input id="pfWeight" class="inp" type="number" min="30" max="180" step="0.5" placeholder="55"></label>
+            <label>身形特点 <select id="pfShape" class="inp"><option value="未填写">未填写</option><option value="偏瘦">偏瘦 / 骨架小</option><option value="匀称">匀称</option><option value="梨形">梨形（下半身较丰满）</option><option value="苹果形">苹果形（腰腹较圆）</option><option value="肩宽">肩宽 / 倒三角</option><option value="丰满">丰满</option></select></label>
+            <label>肤色 <select id="pfSkin" class="inp"><option value="未填写">未填写</option><option value="冷白皮">冷白皮</option><option value="暖白皮">暖白皮</option><option value="自然黄皮">自然黄皮</option><option value="小麦色">小麦色</option><option value="深肤色">深肤色</option></select></label>
+            <label>发色 <select id="pfHair" class="inp"><option value="未填写">未填写</option><option value="自然黑">自然黑</option><option value="深棕">深棕</option><option value="浅棕 / 亚麻">浅棕 / 亚麻</option><option value="染浅色">染浅色</option><option value="其他">其他</option></select></label>
+            <label>BMI 参考 <input id="pfBmi" class="inp" value="填写身高体重后自动计算" disabled></label>
+          </div>
+          <label class="lbl">常穿风格（可多选）</label>
+          <div class="chips" id="pfStyleChips"></div>
+          <button type="button" class="btn-primary full" id="saveProfileBtn">保存我的档案</button>
+          <div class="save-note" id="profileSaveNote"></div>
+          <div class="card-head sub"><h3>数据备份与迁移</h3></div>
+          <p class="hint">导出包含档案、衣橱、收藏和照片，请妥善保管。备份只能导入空账号，避免覆盖已有数据。</p>
+          <div class="upload-line"><button type="button" class="btn-ghost" id="exportBackupBtn">导出完整备份</button><label class="btn-ghost face-picker">导入备份<input id="importBackup" type="file" accept="application/json,.json" aria-label="导入穿搭备份"></label></div>
+          <p class="face-upload-status" id="importStatus" role="status"></p>
+          <div class="card-head sub"><h3>淘宝商品连接</h3></div>
+          <p class="hint">普通淘宝网页搜索可直接使用；将商品实拍自动取回 App 的接口是可选功能，需另外配置。</p>
+          <a class="btn-ghost" href="taobao-connect.html" target="_blank" rel="noopener">淘宝搜索与可选接口设置</a>
+          <div class="card-head sub"><h3>后台服务状态</h3><button id="refreshServicesBtn" type="button" class="btn-ghost">重新检查</button></div>
+          <dl id="serviceStatusList" class="service-status-list"></dl><p id="serviceStatusMessage" class="hint" role="status"></p>
+          <div class="card-head sub"><h3>修改登录密码</h3></div>
+          <p class="hint">修改成功后，当前账号的所有登录会话都会退出，需要使用新密码重新登录。</p>
+          <label class="lbl" for="passwordCurrent">当前密码</label><input id="passwordCurrent" class="inp" type="password" autocomplete="current-password" minlength="10" maxlength="200">
+          <label class="lbl" for="passwordNew">新密码（10–200 位）</label><input id="passwordNew" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
+          <label class="lbl" for="passwordConfirm">再次输入新密码</label><input id="passwordConfirm" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
+          <button id="changePasswordBtn" class="btn-ghost full" type="button">修改密码并重新登录</button><p id="passwordStatus" class="hint" role="status"></p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>面部参考照片</h3><span class="step">FACE</span></div>
+          <div class="face-wrap big"><div class="face large" id="facePreview2"><svg><use href="#i-user"/></svg></div></div>
+          <div class="upload-line">
+            <label class="btn-ghost face-picker" id="faceCameraBtn">
+              <span>拍照</span>
+              <input type="file" id="faceCamera" accept="image/*" capture="user" aria-label="拍摄面部参考照片" aria-describedby="faceUploadStatus">
+            </label>
+            <label class="btn-ghost face-picker" id="faceAlbumBtn">
+              <span>从相册选</span>
+              <input type="file" id="faceImage" accept="image/*" aria-label="从相册选择面部参考照片" aria-describedby="faceUploadStatus">
+            </label>
+            <button type="button" class="btn-primary" id="uploadFaceBtn" disabled>保存这张照片</button>
+            <button type="button" class="btn-ghost" id="removeFaceBtn" disabled>移除参考照片</button>
+          </div>
+          <p class="face-upload-status" id="faceUploadStatus" role="status" aria-live="polite">点击「拍照」或「从相册选」，选好后预览并保存。</p>
+          <div class="privacy boxed">
+            <b>这张照片会被用来做什么？</b>
+            <p>它作为你自己的穿搭参考展示在搭配页，帮助你在挑选领口形状、帽子、眼镜和配色时有个直观对照。系统会结合你填写的肤色、发色给出配色建议，但不会识别人脸身份、不会做人脸比对，也不会公开给其他用户。</p>
+            <p>照片存放在你的私有存储空间，随时可以重新上传覆盖。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 收藏 -->
+    <section class="page" id="page-saved" hidden>
+      <div class="page-head"><div><h3>收藏的搭配</h3><p>把喜欢的方案存下来，出门前直接翻出来照着穿。</p></div></div>
+      <div class="saved-grid" id="savedGrid"></div>
+    </section>
+
+    <footer class="foot">穿搭魔镜 · 为 20–30 岁的日常而做　|　淘宝商品信息以淘宝页面实时展示为准</footer>
+  </main>
+
+  <!-- 手机端底部导航（桌面隐藏） -->
+  <nav class="tabbar" id="tabbar" aria-label="主导航">
+    <button type="button" class="tabbar-item active" data-nav="today">
+      <svg><use href="#i-spark"/></svg><span>今日搭配</span>
+    </button>
+    <button type="button" class="tabbar-item" data-nav="closet">
+      <svg><use href="#i-closet"/></svg><span>我的衣橱</span><span id="tabClosetCount" hidden></span>
+    </button>
+    <button type="button" class="tabbar-item" data-nav="profile">
+      <svg><use href="#i-user"/></svg><span>个人档案</span>
+    </button>
+    <button type="button" class="tabbar-item" data-nav="saved">
+      <svg><use href="#i-bookmark"/></svg><span>搭配收藏</span><span id="tabSavedCount" hidden></span>
+    </button>
+  </nav>
+</div>
+
+<!-- 安装到桌面引导 -->
+<div id="installBar" class="install-bar" hidden>
+  <div class="ib-mark">镜</div>
+  <div class="ib-txt"><b>把穿搭魔镜装到桌面</b><small id="installSub">像 App 一样全屏打开，出门前随手搭一套</small></div>
+  <button type="button" id="installGoBtn" class="ib-go">安装</button>
+  <button type="button" id="installCloseBtn" class="ib-close" aria-label="关闭">×</button>
+</div>
+
+<div id="toastBox" class="toast-box" aria-live="polite"></div>
+
+<script src="cutout.js"></script>
+<script src="look.js"></script>
+<script src="look-reference.js"></script>
+<script src="style-guide.js"></script>
+<script src="outfit-plan.js"></script>
+<script src="shopping.js"></script>
+<script src="app.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

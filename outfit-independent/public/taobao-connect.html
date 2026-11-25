@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>连接淘宝商品 · 穿搭魔镜</title><link rel="stylesheet" href="styles.css"><script src="local-api.js"></script></head>
+<body>
+<main class="taobao-connect-page">
+  <a href="/">← 返回穿搭魔镜</a>
+  <div class="card">
+    <div class="eyebrow">TAOBAO PRODUCTS</div><h1>到淘宝查看真实商品</h1>
+    <p>普通淘宝网页搜索可以直接使用，不需要申请淘宝联盟。商品图片、价格和购买操作在淘宝页面查看。</p>
+    <a class="btn-primary" href="https://www.taobao.com/" target="_blank" rel="noopener noreferrer">打开淘宝网页 ↗</a>
+    <p class="hint">是否需要登录或验证，以淘宝当前页面为准。网页搜索入口不代表 App 已自动取得某个商品的实拍图和详情链接。</p>
+    <p id="connectionStatus" class="climate-control-hint" role="status">正在检查本机商品服务…</p>
+    <button class="btn-ghost" type="button" id="recheck">重新检查连接</button>
+  </div>
+  <details class="card"><summary><b>可选：将真实商品卡自动取回 App</b></summary>
+    <p>只有需要自动展示商品图片、店铺、价格和购买链接时，才需要以下接口配置。</p>
+    <ol class="taobao-connect-steps">
+      <li><b>登录淘宝联盟并完成入驻。</b><p>可使用现有淘宝账号；登录、身份认证及协议确认由你本人完成。</p><a href="https://pub.alimama.com/" target="_blank" rel="noopener noreferrer">打开淘宝联盟官方入口 ↗</a></li>
+      <li><b>按平台要求完成媒体备案，创建应用。</b><p>选择与你实际使用的网页或 App 对应的类型，如实填写资料。所需材料、审核结果与可开通的权限以平台当前页面为准。</p></li>
+      <li><b>取得应用凭证与商品搜索权限。</b><p>本项目使用物料搜索升级版；需 AppKey、AppSecret，以及推广位 ID。普通购物登录状态不能代替这些配置。</p><a href="https://developer.alibaba.com/docs/doc.htm?articleId=118970&amp;docType=1&amp;treeId=713" target="_blank" rel="noopener noreferrer">官方接入指南 ↗</a></li>
+      <li><b>仅在这台电脑配置，再验证真实商品。</b><p>将凭证保存在独立版目录的 .env 文件，重启服务后回到本页检查。不要在聊天、截图或分享链接中发送密钥。</p><details><summary>查看本机配置项</summary><pre>TAOBAO_APP_KEY=你的应用AppKey
+TAOBAO_APP_SECRET=你的应用密钥
+TAOBAO_ADZONE_ID=推广位最后一段数字</pre><p>保留 .env 中已有的其他设置，不要覆盖。取得凭证后可继续由我协助完成本机配置。</p></details></li>
+    </ol>
+  </details>
+  <div class="card">
+    <h2>验证真实主图与商品链接</h2>
+    <p>配置完成后，用下面的关键词查询一次。只有淘宝实际返回的商品才会显示在这里。</p>
+    <label for="testKeyword">商品关键词</label><input class="inp" id="testKeyword" value="浅蓝 短袖 衬衫 女" maxlength="100">
+    <button class="btn-primary" id="testProducts" type="button" disabled>查询真实商品</button>
+    <div id="productTest" aria-live="polite"></div>
+    <p class="hint">当前款式图和 AI 图片仍属于搭配参考；真实商品卡会另外显示淘宝来源与购买链接。商品价格、尺码和库存以店铺页面为准。</p>
+  </div>
+</main>
+<script src="shopping.js"></script><script src="taobao-connect.js"></script>
+</body></html>
