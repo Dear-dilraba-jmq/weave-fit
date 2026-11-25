@@ -37,7 +37,7 @@ test('three wardrobe rows select independently by buttons, keyboard and touch-sc
  holdManual=true;$('#manualApplyBtn').click();await until(()=>!!releaseManual);$('[data-manual-key="top"][data-manual-step="-1"]').click();releaseManual();
  await until(()=>!$('#manualApplyBtn').disabled);assert.equal($('#resultArea').hidden,true,'a response for the old combination must not replace the new selection');
  holdManual=false;$('[data-manual-key="top"][data-manual-step="1"]').click();$('#manualApplyBtn').click();await until(()=>!$('#resultArea').hidden&&!$('#manualApplyBtn').disabled);
- assert.equal($('#resultArea .eyebrow').textContent,'MY OWN COMBINATION');assert.equal($('#resultArea [data-action="regen"]'),null);assert.equal($('#resultArea .look-details').open,true);
+ assert.equal($('#resultArea .eyebrow').textContent,'MY OWN COMBINATION');assert.equal($('#resultArea [data-action="regen"]'),null);assert.ok($('#resultArea #lookBox'));assert.equal($('#resultArea').lastElementChild.id,'tryonBox');assert.equal($('#personalReference').hidden,true);assert.equal($('#resultArea .notes'),null);assert.equal($('#resultArea .climate-result'),null);
  $('[data-action="save"]').click();await until(()=>$('#navSavedCount').textContent==='1');
  const backup=await (await localFetch('/api/backup')).json(),plan=backup.tables.outfits[0].payload;
  assert.equal(plan.source,'manual');assert.deepEqual(plan.items.map(i=>i.id),[top1.id,bottom2.id,shoes.id]);assert.deepEqual(plan.gaps,[]);

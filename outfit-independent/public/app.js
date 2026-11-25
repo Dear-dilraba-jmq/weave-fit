@@ -14,7 +14,7 @@
   };
   var uid = function () { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9); };
 
-  var STYLES = ['参考图风格', '极简', '通勤', '街头', '学院', '甜酷', '轻熟', '度假', '复古', '运动'];
+  var STYLES = ['极简', '街头', '学院', '甜酷', '轻熟', '度假', '复古', '田园复古', '运动'];
   var OCCASIONS = ['日常通勤', '约会', '朋友聚会', '面试', '周末出行', '旅行', '校园上课', '运动', '正式晚宴'];
   var CATEGORIES = ['全部', '上装', '下装', '外套', '连衣裙', '鞋履', '包袋', '配饰', '其他'];
   var TITLES = {
@@ -26,7 +26,7 @@
 
   var state = {
     session: null, profile: null, wardrobe: [], saved: [], current: null,
-    style: '参考图风格', occasion: '日常通勤', selected: new Set(),
+    style: '极简', occasion: '日常通勤', selected: new Set(),
     filter: '全部', profileStyles: new Set(),
     imageUrls: {}, pendingOtp: null, otpChannel: 'email',
     modelId: null, lastGenAt: 0, generating: false, nav: 'today',
@@ -54,11 +54,12 @@
     state.selected=new Set();state.profileStyles=new Set();state.imageUrls={};state.lookUrls={};state.lookPromise=null;
     state.modelId=null;state.lastGenAt=0;state.generating=false;state.tryonGenerating=false;state.tryonConfig=null;
     state.dataReady=false;state.services=null;state.itemSaving=false;state.editingItemId=null;state.profilePromise=null;state.deleting=new Set();state.savingBackup=false;
-    state.filter='全部';state.style='参考图风格';state.occasion='日常通勤';state.planVariant=0;state.profileSignature='';
+    state.filter='全部';state.style='极简';state.occasion='日常通勤';state.planVariant=0;state.profileSignature='';
     state.itemManualFields={};state.itemAutoValues={};
     $('#resultArea').innerHTML='';$('#resultArea').hidden=true;
     $('#toastBox').innerHTML='';$('#genStatus').textContent='';$('#genStatus').className='gen-status';
     $('#generateBtn').disabled=false;$('#generateBtn').textContent='生成我的搭配';
+    $('#fullBodyImage').value='';$('#fullBodyStatus').textContent='';
     $('#autoTryon').checked=false;$('#autoTryon').disabled=true;$('#autoTryonInfo').textContent='';
     ['itemName','itemColor','itemTags','itemNote','itemImage','itemCamera','faceImage','faceCamera','extraInput','importBackup'].forEach(function(id){$('#'+id).value='';});
     $('#faceImage').disabled=false;$('#faceCamera').disabled=false;$('#importBackup').disabled=false;
@@ -73,7 +74,6 @@
     $('#itemPanelTitle').textContent='新增一件单品';$('#saveProfileBtn').disabled=false;$('#exportBackupBtn').disabled=false;
     $$('#addPanel input, #addPanel select, #addPanel button').forEach(function(el){el.disabled=false;});
     $('#autoFillItemBtn').disabled=true;$('#itemAutoStatus').textContent='上传照片后会自动填写，检查一下就能保存；也可直接手动录入。';
-    $('#sideName').textContent=session ? session.user.name : '我的账号';$('#sideAvatar').textContent=session ? String(session.user.name).slice(0,1) : '我';
     renderAll();
   }
 
@@ -167,11 +167,8 @@
   async function enterApp() {
     var ticket=accountTicket();
     $('#appView').hidden=true;$('#authView').hidden=true;$('#bootView').hidden=false;
-    var u = state.session.user || {};
-    var name = u.name || (state.profile && state.profile.nickname) || '我的账号';
-    $('#sideName').textContent = name;
+    renderSideUser();
     $('#sideSub').textContent = '已登录 · 数据仅自己可见';
-    $('#sideAvatar').textContent = String(name).slice(0, 1);
     var d = new Date();
     $('#topDate').textContent = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
     switchNav('today');
@@ -190,10 +187,11 @@
       if(!imageStatus.ok)throw Error(cfg.error&&cfg.error.message||'图像服务状态读取失败');
       if(!isCurrentAccount(ticket))return;
       state.tryonConfig=cfg;
+      $('#autoTryon').closest('label').hidden=!!state.tryonConfig.local;
       $('#autoTryon').disabled=!state.tryonConfig.configured;
       $('#autoTryonInfo').textContent=state.tryonConfig.configured
-        ? '勾选后，每次生成将面部照片、身材资料和本套衣服图发送至 '+state.tryonConfig.provider+'，并自动保存人像图。'
-        : '自动真人生图尚未配置图像 API；仅展示本账号已保存的人像图。';
+        ? state.tryonConfig.local?'保存全身参考照后，每次生成推荐会同时在本机试穿。':'勾选后，每次生成将面部照片、身材资料和本套衣服图发送至 '+state.tryonConfig.provider+'，并自动保存人像图。'
+        : '本机试穿模型尚未就绪；可以先在个人档案保存全身参考照。';
     } catch(e) { if(!isCurrentAccount(ticket))return;$('#autoTryonInfo').textContent='图像服务状态读取失败，请稍后刷新'; }
     if (!state.current) {
       var latest=state.saved.find(function(s){return s.payload && s.payload.tryonImage;});
@@ -284,9 +282,10 @@
 
   function renderSideUser() {
     var u = (state.session && state.session.user) || {};
-    var name = u.name || (state.profile && state.profile.nickname) || '我的账号';
+    var nickname = String(state.profile?.nickname || '').trim();
+    var name = nickname || u.name || '我的账号';
     $('#sideName').textContent = name;
-    $('#sideAvatar').textContent = String(name).slice(0, 1);
+    $('#sideAvatar').textContent = Array.from(name)[0];
   }
   function updateCounts() {
     $('#navClosetCount').textContent = state.wardrobe.length;
@@ -399,6 +398,7 @@
 
   function renderReference() {
     var p = state.profile || {};
+    $('#fullBodyStatus').textContent=p.full_body_photo_path?'已保存全身参考照，可重新选图替换':'请选择一张从头到脚、衣服轮廓清晰的照片';
     var face = p.face_photo_path && state.imageUrls[p.face_photo_path];
     $('#removeFaceBtn').disabled=!p.face_photo_path;
     ['#facePreview', '#facePreview2'].forEach(function (sel) {
@@ -887,7 +887,7 @@
       state.planVariant=options.variant;state.current=plan;
       renderResult();startLook(plan);
       $('#genStatus').className='gen-status';$('#genStatus').textContent=plan.source==='ai'?'已由后台 AI 生成，并检查衣橱与温度适配。':'已由后台内置规则生成；无需外部 AI 即可使用。';
-      if($('#autoTryon').checked && state.tryonConfig && state.tryonConfig.configured)runTask(function(){return startTryon(plan,true);});
+      if(($('#autoTryon').checked || (state.tryonConfig?.local && state.profile?.full_body_photo_path)) && state.tryonConfig && state.tryonConfig.configured)runTask(function(){return startTryon(plan,true);});
       setTimeout(function(){if(isCurrentAccount(ticket)&&state.current===plan)$('#resultArea').scrollIntoView({behavior:'smooth',block:'start'});},120);
     }catch(e){if(isCurrentAccount(ticket)){var message=e.message||'生成失败，请重试';$('#genStatus').className='gen-status';$('#genStatus').textContent=message;toast(message,'err');}}
     finally{if(isCurrentAccount(ticket)){state.generating=false;btn.disabled=false;btn.textContent='生成我的搭配';}}
@@ -897,30 +897,31 @@
   function tryonHtml(c) {
     var url=c.tryonImage && state.imageUrls[c.tryonImage];
     var busy=state.tryonGenerating;
+    var local=state.tryonConfig?.local || c.tryonSource==='fashn-local';
     return '<div class="tryon-head"><div><span class="eyebrow">YOUR PERSONAL LOOK</span><h3>我的全身穿搭图</h3></div><span class="badge">20–30 岁 · 自然日常</span></div>'+
-      (url?'<img class="tryon-image" src="'+esc(url)+'" alt="根据你的面部参考与身材资料生成的全身穿搭图">':'<div class="tryon-empty"><svg><use href="#i-user"/></svg><b>'+(busy?'正在生成你的全身穿搭图…':'你的衣服和推荐款，都能组成完整穿搭图')+'</b><p>基于你的面部和身材资料：有照片的衣服按实拍还原，没有照片或尚未购买的款式按搭配建议生成。衣橱为空也能生成参考。</p></div>')+
+      (url?'<img class="tryon-image" src="'+esc(url)+'" alt="根据你的面部参考与身材资料生成的全身穿搭图">':'<div class="tryon-empty"><svg><use href="#i-user"/></svg><b>'+(busy?'正在生成你的全身穿搭图…':'你的衣服和推荐款，都能组成完整穿搭图')+'</b><p>'+(local?'使用你的全身参考照试穿有可用图片的上装、下装或连衣裙。鞋包在单品清单展示。':'基于你的面部和身材资料：有照片的衣服按实拍还原，没有照片或尚未购买的款式按搭配建议生成。衣橱为空也能生成参考。')+'</p></div>')+
       '<div class="tryon-piece-list">'+(c.items||[]).map(function(i){return '<span class="badge">已有 · '+esc(i.name)+'</span>';}).join('')+(c.gaps||[]).map(function(i){return '<span class="badge">待购参考 · '+esc(i.name)+'</span>';}).join('')+'</div>'+
       '<p class="tryon-note">AI 生成的视觉参考，可能存在面部、比例或服装细节偏差，不代表真实试穿或准确尺码。</p>'+
-      '<p class="tryon-status" role="status">'+esc(c.tryonMessage || (!state.tryonConfig?.configured?(url?'这是本账号保存的穿搭图；自动生图 API 尚未配置。':'本账号还没有这套穿搭图；自动生图 API 尚未配置。'):''))+'</p>'+
+      '<p class="tryon-status" role="status">'+esc([c.tryonMessage,c.tryonNote].filter(Boolean).join(' ') || (!state.tryonConfig?.configured?(url?'这是本账号保存的穿搭图；自动生图 API 尚未配置。':'本账号还没有这套穿搭图；自动生图 API 尚未配置。'):''))+'</p>'+
       '<div class="tryon-actions">'+(url?'<a class="btn-primary" href="'+esc(url)+'" download="我的全身穿搭.webp">保存全身图</a>':'')+
       '<button type="button" class="btn-ghost" data-action="tryon" '+(busy||!state.tryonConfig?.configured?'disabled':'')+'>'+(busy?'正在生成…':url?'重新生成本人穿搭图':'生成本人穿搭图')+'</button></div>'+
-      (state.tryonConfig?.configured?'<label class="tryon-consent"><input type="checkbox" id="tryonConsent">同意将本次面部照片、身材资料和衣服参考图发送至 '+esc(state.tryonConfig.provider)+' 用于生图，结果自动保存到搭配收藏。</label>':'');
+      (state.tryonConfig?.configured&&!state.tryonConfig.local?'<label class="tryon-consent"><input type="checkbox" id="tryonConsent">同意将本次面部照片、身材资料和衣服参考图发送至 '+esc(state.tryonConfig.provider)+' 用于生图，结果自动保存到搭配收藏。</label>':'');
   }
 
   async function startTryon(c,consent) {
     var ticket=accountTicket();
     if(state.tryonGenerating)return;
     if(!consent){toast('请先勾选本次生图资料使用确认','warn');return;}
-    if(!state.profile?.face_photo_path||!state.profile.height_cm||!state.profile.weight_kg){toast('请先保存面部照片、身高和体重','warn');switchNav('profile');return;}
+    if(state.tryonConfig?.local ? !state.profile?.full_body_photo_path : (!state.profile?.face_photo_path||!state.profile.height_cm||!state.profile.weight_kg)){toast(state.tryonConfig?.local?'请先在个人档案保存全身参考照':'请先保存面部照片、身高和体重','warn');switchNav('profile');return;}
     state.tryonGenerating=true;c.tryonMessage='正在生成全身图，通常需要一两分钟，请保留页面。';
     $('#tryonBox').innerHTML=tryonHtml(c);
     try {
-      var res=await cloud.fetch('/api/tryon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true,plan:c})});
+      var res=await cloud.fetch('/api/tryon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:!state.tryonConfig.local,local:!!state.tryonConfig.local,plan:c})});
       var response=await res.json();if(!res.ok)throw new Error(response.error?.message||'生图失败');
       if(!isCurrentAccount(ticket))return;
       c.tryonImage=response.data.path;c.savedId=response.data.outfit.id;
       state.saved.unshift(response.data.outfit);updateCounts();renderSaved();
-      await refreshImages([c.tryonImage]);if(!isCurrentAccount(ticket))return;c.tryonMessage='全身图已生成，并保存到搭配收藏。';
+      await refreshImages([c.tryonImage]);if(!isCurrentAccount(ticket))return;c.tryonSource=response.data.outfit.payload?.tryonSource;c.tryonNote=response.data.outfit.payload?.tryonNote;c.tryonMessage='全身图已生成，并保存到搭配收藏。';
     }catch(e){if(!isCurrentAccount(ticket))return;c.tryonMessage=e.message;toast(e.message,'err');}
     finally{if(isCurrentAccount(ticket)){state.tryonGenerating=false;if(state.current===c && $('#tryonBox'))$('#tryonBox').innerHTML=tryonHtml(c);}}
   }
@@ -989,6 +990,8 @@
 
   function renderResult() {
     var c = state.current;
+    $('#personalReference').hidden=!!(c&&state.session);
+    $('#autoBuilder').classList.toggle('has-result',!!(c&&state.session));
     if (!c || !state.session) { $('#resultArea').innerHTML='';$('#resultArea').hidden = true; return; }
     c.items = Array.isArray(c.items) ? c.items.filter(function(i){return i&&typeof i==='object'&&!Array.isArray(i);}) : [];
     c.gaps = Array.isArray(c.gaps) ? c.gaps.filter(function(i){return i&&typeof i==='object'&&!Array.isArray(i);}) : [];
@@ -1010,34 +1013,19 @@
         '<details class="gap-shopping"><summary>淘宝商品与购买链接</summary><div class="shopping-slot" data-shopping-gap="' + index + '"></div></details></div>';
     }).join('') + '</div>';
 
-    var tipsHtml = c.tips.length ? '<div class="sec-title">穿搭小技巧</div><ul class="tips">' + c.tips.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '';
 
     $('#resultArea').innerHTML =
       '<div class="result-head"><div><div class="eyebrow">' + (c.source === 'manual' ? 'MY OWN COMBINATION' : c.source === 'ai' ? 'AI OUTFIT PLAN' : 'RULE-BASED PLAN') + '</div>' +
       '<h3>' + esc(c.title) + '</h3></div><div class="result-actions">' +
       '<button type="button" class="btn-ghost" data-action="'+(c.source==='manual'?'edit-manual':'regen')+'">'+(c.source==='manual'?'继续滑动换单品':'换一套')+'</button>' +
       '<button type="button" class="btn-primary" data-action="save" '+(c.saving?'disabled':'')+'>'+(c.saving?'收藏中…':c.savedId?'已收藏':'收藏这套')+'</button></div></div>' +
-      (c.source==='manual'?'':'<div class="tryon-visual" id="tryonBox">'+tryonHtml(c)+'</div>')+
-      '<details class="look-details"'+(c.source==='manual'?' open':'')+'><summary>查看这套的单品照片与补购参考</summary><div class="look-visual" id="lookBox">' + lookHtml(c) + '</div></details>' +
-      (c.source==='manual'?'<div class="tryon-visual" id="tryonBox">'+tryonHtml(c)+'</div>':'')+
+      '<div class="look-visual" id="lookBox">' + lookHtml(c) + '</div>' +
       '<div class="result-card">' +
-      '<div class="badge-row"><span class="badge hot">' + esc(c.style) + '</span><span class="badge">' + esc(c.occasion) + '</span>' +
-      '<span class="badge">' + esc(c.temperature) + '°C · ' + esc(c.weather) + '</span>' +
-      (c.season?'<span class="badge">'+esc(c.season)+'</span>':'')+
-      '<span class="badge">来自你的衣橱 ' + c.items.length + ' 件</span><span class="badge">待补 ' + c.gaps.length + ' 件</span></div>' +
-      '<p class="concept">' + esc(c.concept) + '</p>' +
-      (c.climate?'<div class="climate-result"><b>'+esc(c.climate.label)+' · '+esc(c.styleGuide||c.style)+'</b><p>'+esc(c.climate.advice)+'</p><small>按你设置的温度选材质与层次；季节默认值是示例，不是天气预报。</small></div>':'')+
-      (c.climate&&/参考图|学院|复古|甜酷/.test(c.style)?'<details class="style-source"><summary>查看风格灵感图库</summary><a href="'+window.OutfitStyleGuide.referenceFor(c.climate)+'" target="_blank" rel="noopener"><img src="'+window.OutfitStyleGuide.referenceFor(c.climate)+'" alt="学院与甜酷穿搭灵感拼图" loading="lazy"></a><p>这是服装风格示例，不是本人试穿结果。借鉴配色、领型与版型，保暖层次以本套建议为准。点击图片可放大。</p></details>':'')+
       ((c.warnings||[]).length?'<ul class="climate-warnings">'+c.warnings.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul>':'')+
-      '<div class="notes">' +
-      '<div class="note"><b>配色逻辑</b><p>' + esc(c.color_logic) + '</p></div>' +
-      '<div class="note"><b>身形与面部适配</b><p>' + esc(c.fit_note) + '</p></div>' +
-      '<div class="note"><b>场合提示</b><p>' + esc(c.occasion_note) + '</p></div>' +
-      '</div>' +
       '<div class="sec-title">用你衣橱里的这些 <small>已选单品会优先出现</small></div>' + itemsHtml +
       (c.gaps.length ? '<div class="sec-title">缺少的单品 · 图片参考 <small>文字与对应款式一起看</small></div>' + gapsHtml +
       '<div class="tb-note">商品卡展示淘宝款式候选；人像图与款式示意仅供搭配参考。预算为选型参考，购买前请核对实物颜色与尺码。</div>' : '') +
-      tipsHtml + '</div>';
+      '</div><div class="tryon-visual" id="tryonBox">'+tryonHtml(c)+'</div>';
     $('#resultArea').hidden = false;
     if(window.OutfitShopping)window.OutfitShopping.mount($('#resultArea'),c);
   }
@@ -1225,7 +1213,7 @@
       if (undel) { runTask(function(){return deleteSaved(undel.dataset.undel);}); return; }
       var act = e.target.closest('[data-action]');
       if (act) {
-        if (act.dataset.action === 'tryon') runTask(function(){return startTryon(state.current,!!$('#tryonConsent')?.checked);});
+        if (act.dataset.action === 'tryon') runTask(function(){return startTryon(state.current,state.tryonConfig?.local||!!$('#tryonConsent')?.checked);});
         if (act.dataset.action === 'save') runTask(saveOutfit);
         if (act.dataset.action === 'regen') runTask(generate);
         if (act.dataset.action === 'edit-manual') editManualPlan();
@@ -1275,6 +1263,23 @@
       $(sel).addEventListener('change', function () { handleItemImage(this.files[0]); });
     });
     $('#saveItemBtn').addEventListener('click',function(){runTask(addItem);});
+    $('#fullBodyImage').addEventListener('change', function () {
+      const file=this.files[0];
+      const ticket=accountTicket();
+      if(!file)return;
+      this.value='';
+      runTask(async function(){
+        if(!allowedImage(file))throw Error('请选择 JPG 或 PNG 全身照片');
+        const prepared=await window.OutfitImage.prepare(file,1536);
+        assertAccount(ticket);
+        const path=await uploadImage(prepared.blob,'profile','jpg');
+        assertAccount(ticket);
+        if(await persistProfile({full_body_photo_path:path})){
+          assertAccount(ticket);
+          $('#fullBodyStatus').textContent='全身参考照已保存';
+        }
+      });
+    });
     $('#saveProfileBtn').addEventListener('click', function () { runTask(function(){return persistProfile({});}); });
     $('#pfHeight').addEventListener('input', updateBmi);
     $('#pfWeight').addEventListener('input', updateBmi);

@@ -58,7 +58,7 @@ async function until(fn,label){for(let i=0;i<150;i++){if(fn())return;await delay
       finally{activeRequests--;}
     };
     for(const script of ['local-api.js','style-guide.js','outfit-plan.js','look-reference.js','shopping.js','app.js'])w.eval(fs.readFileSync(path.join(__dirname,'../public',script),'utf8'));
-    async function ready(name){await until(()=>!$('#appView').hidden&&$('#sideName').textContent===name&&!$('#localLoginBtn').disabled,'account '+name+' is ready');await until(()=>activeRequests===0,'requests settled');await delay(50);}
+    async function ready(name){const displayName=name===names.a?'Synthetic A profile':name;await until(()=>!$('#appView').hidden&&$('#sideName').textContent===displayName&&!$('#localLoginBtn').disabled,'account '+name+' is ready');await until(()=>activeRequests===0,'requests settled');await delay(50);}
     async function logout(){ $('#logoutBtn').click();await until(()=>!$('#authView').hidden,'logout screen');await until(()=>activeRequests===0,'logout request settled');}
     async function login(name,register){
       $('[data-auth-mode="'+(register?'register':'login')+'"]').click();$('#localUsername').value=name;$('#localPassword').value=password;$('#localLoginBtn').click();await ready(name);

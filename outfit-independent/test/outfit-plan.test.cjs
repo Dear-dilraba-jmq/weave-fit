@@ -2,6 +2,39 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {suggest}=require('../public/outfit-plan.js');
 const {climateFor,validate}=require('../public/outfit-plan.js');
 const wardrobe=[{id:1,category:'上装',name:'白衬衫',image_path:'shirt',season:'四季'},{id:2,category:'下装',name:'灰裤子',image_path:'pants'},{id:3,category:'鞋履',name:'棕鞋',image_path:'shoe'},{id:4,category:'包袋',name:'棕包',image_path:'bag'},{id:5,category:'外套',name:'大衣',image_path:'coat',season:'冬'}];
+test('vacation selects a suitable dress before generic separates and offers a warm-weather or cool-weather reference as needed',()=>{
+ const options={temperature:30,style:'度假',occasion:'旅行'};
+ const dress={id:10,category:'连衣裙',name:'浅蓝碎花短袖连衣裙'};
+ const office={id:11,category:'连衣裙',name:'黑色通勤西装裙'};
+ const clothes=[...wardrobe,dress,office];
+ const owned=suggest(clothes,[],options);
+ assert.ok(owned.items.some(item=>item.id===dress.id));
+ assert.ok(!owned.items.some(item=>[1,2,11].includes(item.id)));
+ const cool={...options,temperature:18,weather:'小雨'};
+ const missing=suggest(clothes,[],cool);
+ assert.ok(missing.gaps.some(item=>item.category==='连衣裙'&&/长袖/.test(item.name)));
+ assert.ok(!missing.items.some(item=>[1,2,10,11].includes(item.id)));
+ assert.deepEqual(validate(missing,clothes,cool),[]);
+ const picked=suggest(clothes,[wardrobe[0]],options);
+ assert.ok(picked.items.some(item=>item.id===1));
+ assert.ok(!picked.gaps.some(item=>item.category==='连衣裙'));
+});
+test('30°C skips a plain sweatshirt and 18°C skips a short-sleeve top',()=>{
+ const sweatshirt={id:6,category:'上装',name:'灰色连帽卫衣',season:'四季',tags:['运动']};
+ const tee={id:7,category:'上装',name:'白色短袖 T 恤',season:'四季'};
+ const clothes=[...wardrobe,sweatshirt,tee];
+ for(const [temperature,piece] of [[30,sweatshirt],[18,tee]]){
+  const options={temperature,style:'运动'};
+  const plan=suggest(clothes,[piece],options);
+  assert.equal(plan.items.some(item=>item.id===piece.id),false);
+  assert.ok(plan.warnings.length);
+  assert.deepEqual(validate(plan,clothes,options),[]);
+  assert.ok(validate({...plan,items:[...plan.items,piece]},clothes,options).some(reason=>reason.includes(piece.name)));
+ }
+ const rainy=suggest([],[],{temperature:18,weather:'小雨',style:'运动'});
+ assert.ok(rainy.gaps.some(item=>item.category==='外套'&&/防水/.test(item.name)));
+ assert.ok(rainy.gaps.some(item=>item.category==='上装'&&/长袖/.test(item.name)));
+});
 test('rules select actual photographed wardrobe items without manual preselection',()=>{
  const r=suggest(wardrobe,[],{temperature:22,style:'极简'});
  assert.deepEqual(r.items.map(i=>i.id),[1,2,3,4]);assert.equal(r.gaps.length,0);

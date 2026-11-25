@@ -226,28 +226,6 @@ label.lbl:first-of-type{margin-top:0}
 .foot{font-size:11px;color:var(--dim);text-align:center;padding:34px 0 10px;border-top:1px solid var(--line);margin-top:46px}
 
 /* ---------- Hero / 今日搭配 ---------- */
-.hero{
-  position:relative;overflow:hidden;border:1px solid var(--line);border-radius:26px;
-  background:linear-gradient(112deg,rgba(233,198,140,.30),rgba(214,177,124,.20) 48%,rgba(255,252,245,.86));
-  padding:38px 40px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:216px;
-}
-.hero::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-70px;top:-110px;background:radial-gradient(circle,rgba(255,253,246,.72),transparent 70%);pointer-events:none}
-.hero-copy{position:relative;z-index:2;max-width:560px}
-.hero-tag{font-size:11px;font-weight:800;letter-spacing:.16em;color:#8f5527;margin-bottom:14px}
-.hero h1{font-size:clamp(28px,3.1vw,42px);line-height:1.24;margin:0 0 16px;font-weight:800;letter-spacing:-.03em}
-.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.85;max-width:490px}
-.hero-art{position:relative;width:280px;height:180px;flex:none;z-index:2}
-.art-ring{position:absolute;inset:8px 20px;border:1px dashed rgba(120,90,55,.22);border-radius:50%}
-.art-card{position:absolute;width:112px;height:138px;border-radius:18px;background:#fffdf7;border:1px solid var(--line-2);padding:10px;box-shadow:0 14px 30px rgba(120,90,55,.14);display:flex;flex-direction:column;gap:8px}
-.art-card i{display:block;flex:1;border-radius:12px}
-.art-card span{font-size:9px;letter-spacing:.16em;color:var(--dim);font-weight:800}
-.art-card.a1{left:4px;top:18px;transform:rotate(-11deg)}
-.art-card.a1 i{background:linear-gradient(150deg,#f8ecd5,#dcc39c)}
-.art-card.a2{left:88px;top:6px;transform:rotate(3deg);z-index:2}
-.art-card.a2 i{background:linear-gradient(150deg,#7d6449,#3f3123)}
-.art-card.a3{right:0;top:30px;transform:rotate(12deg)}
-.art-card.a3 i{background:linear-gradient(150deg,#e8dcc4,#bda485)}
 .two-col{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.85fr);gap:20px;align-items:start}
 .profile-cols{grid-template-columns:minmax(0,1.25fr) minmax(280px,.85fr)}
 .picker{display:flex;flex-wrap:wrap;gap:9px;max-height:172px;overflow-y:auto;padding:2px}
@@ -445,7 +423,6 @@ label.lbl:first-of-type{margin-top:0}
 
 /* ---------- 响应式：平板 / 小屏桌面 ---------- */
 @media(max-width:1100px){
-  .hero-art{display:none}
   .two-col{grid-template-columns:1fr}
   .add-grid{grid-template-columns:1fr}
   .upload-box{min-height:160px}
@@ -511,10 +488,6 @@ label.lbl:first-of-type{margin-top:0}
   }
 
   /* 卡片与内容 */
-  .hero{padding:24px 20px;margin-bottom:16px;border-radius:22px;min-height:0}
-  .hero h1{font-size:27px}
-  .hero p{font-size:12.5px;line-height:1.8}
-  .hero-tag{margin-bottom:10px}
   .card{padding:17px;border-radius:20px}
   .card-head{margin-bottom:16px}
   .card-head.sub{margin-top:22px;padding-top:18px}
@@ -565,8 +538,6 @@ label.lbl:first-of-type{margin-top:0}
   .auth-box{padding-left:16px;padding-right:16px}
   .main{padding-left:11px;padding-right:11px}
   .card{padding:14px}
-  .hero{padding:20px 16px}
-  .hero h1{font-size:24px}
   .outfit-item .pic{height:104px}
   .closet-card .pic{height:122px}
   .tabbar-item{font-size:9px}
@@ -700,3 +671,5 @@ label.lbl:first-of-type{margin-top:0}
   .look-visual{padding:12px}
   .look-actions .btn-ghost,.look-actions .btn-primary{flex:1;min-width:130px}
 }
+
+#autoBuilder.has-result{grid-template-columns:minmax(0,1fr)}

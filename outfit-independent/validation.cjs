@@ -1,6 +1,6 @@
 'use strict';
 const fields={
-  profiles:['nickname','gender','height_cm','weight_kg','body_shape','skin_tone','hair_color','style_prefs','face_photo_path','owner_name','updated_at'],
+  profiles:['nickname','gender','height_cm','weight_kg','body_shape','skin_tone','hair_color','style_prefs','full_body_photo_path','face_photo_path','owner_name','updated_at'],
   wardrobe_items:['name','category','color','season','tags','image_path','cutout','original_path','note','owner_name'],
   outfits:['title','style','occasion','payload','owner_name']
 };
@@ -20,7 +20,7 @@ function clean(table,row){
   object(row);const result=Object.fromEntries(fields[table].filter(k=>Object.hasOwn(row,k)).map(k=>[k,row[k]]));
   const limits={nickname:24,gender:20,body_shape:40,skin_tone:40,hair_color:40,name:80,category:20,color:40,season:20,note:500,title:80,style:40,occasion:80,owner_name:80,updated_at:40};
   for(const [key,max] of Object.entries(limits))if(Object.hasOwn(result,key))string(result[key],key,max,{nullable:key==='owner_name'});
-  for(const key of ['image_path','original_path','face_photo_path'])if(Object.hasOwn(result,key))string(result[key],key,350,{nullable:true});
+  for(const key of ['image_path','original_path','full_body_photo_path','face_photo_path'])if(Object.hasOwn(result,key))string(result[key],key,350,{nullable:true});
   if(Object.hasOwn(result,'height_cm'))number(result.height_cm,'身高',120,220,true);
   if(Object.hasOwn(result,'weight_kg'))number(result.weight_kg,'体重',30,180,true);
   for(const key of ['style_prefs','tags'])if(Object.hasOwn(result,key))strings(result[key],key);
@@ -34,7 +34,7 @@ function clean(table,row){
   return result;
 }
 function planInput(input){
-  object(input,'搭配请求');const result={style:'参考图风格',occasion:'日常通勤',season:'',temperature:22,weather:'晴',extra:'',selectedIds:[],variant:0};
+  object(input,'搭配请求');const result={style:'极简',occasion:'日常通勤',season:'',temperature:22,weather:'晴',extra:'',selectedIds:[],variant:0};
   for(const [key,max]of Object.entries({style:40,occasion:80,season:20,weather:30,extra:200}))if(Object.hasOwn(input,key)){string(input[key],key,max);result[key]=input[key];}
   if(!['','春季','夏季','秋季','冬季'].includes(result.season))fail(400,'穿搭季节不正确');
   if(Object.hasOwn(input,'temperature')){number(input.temperature,'温度',-10,40);result.temperature=input.temperature;}

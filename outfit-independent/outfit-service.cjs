@@ -33,7 +33,10 @@ function makePrompt(wardrobe,profile,input){
     '当前账号衣橱，只能使用这里的编号：'+JSON.stringify(wardrobe.map(i=>({id:i.id,name:i.name,category:i.category,color:i.color,season:i.season,tags:i.tags,note:i.note}))),
     '预选编号：'+JSON.stringify(picked)+'；优先保留适温预选，冲突时替换并写warnings。',
     '温度需求：'+planner.climateFor(input).advice+'。实际温度优先于季节标签。低温裙装补腿部保暖，炎热天气不要厚针织或羽绒，雨雪天不选麂皮帆布鞋。',
-    '参考图风格：'+guide.prompt()+'；若用户另选风格，尊重选择。',
+    '学院、复古、甜酷可参考这些细节：'+guide.prompt()+'。仅在与用户所选风格一致时采用。日常通勤属于场合，结合所选风格选择整洁、便于办公的服装。',
+    '度假风且温度与场合合适时，优先用碎花、印花或棉麻连衣裙作为主体。18–23°C 优先长袖，炎热时优先轻薄短袖。保留适温的预选主件。',
+    '风格重点：极简用纯色和直线剪裁；复古用波点、高腰和微喇；学院用 Polo、格纹和百褶；田园复古用小碎花、泡泡袖、刺绣和维希格。',
+    '场合要求：约会优先缎面、垂感或收腰细节及低跟鞋；面试优先浅色衬衫、深色西裤或剪裁利落的正式裙装和包脚鞋；旅行考虑长时间步行，选好走的鞋、斜挎包和一个适合拍照的配色或图案亮点。',
     '结构：{"title":"方案名","concept":"搭配思路","color_logic":"配色","fit_note":"自然身形适配","occasion_note":"场合提示","items":[{"id":衣橱编号,"why":"作用"}],"gaps":[{"name":"需补单品","category":"上装/下装/外套/连衣裙/鞋履/包袋/配饰","advice":"材质和版型","budget":"人民币区间","keyword":"具体搜索词"}],"tips":["技巧"],"warnings":[]}',
     '只有衣橱缺少的必要单品才进gaps，最多9件；衣橱足够允许为空。必须组成含鞋履的完整穿搭。不得虚构已有衣服、价格、库存、商品URL或看过用户照片。'].join('\n');
 }
@@ -55,6 +58,10 @@ async function generate({db,owner,input,env,fetchImpl=fetch}){
     if(!raw||typeof raw!=='object'||Array.isArray(raw)||!Array.isArray(raw.items)||!Array.isArray(raw.gaps))throw Error('Invalid model plan');
     const plan=complete(raw,wardrobe,request,profile,'ai');
     if(planner.validate(plan,wardrobe,request).length)throw Error('Temperature mismatch');
+    if(planner.prefersVacationDress(plan.climate,request)&&!picked.some(item=>['top','bottom','dress'].includes(planner.group(item))&&!planner.unsuitable(item,plan.climate))){
+      const pieces=plan.items.map(item=>wardrobe.find(owned=>owned.id===item.id)).filter(Boolean).concat(plan.gaps);
+      if(!pieces.some(item=>planner.group(item)==='dress'&&planner.styleMatch(item,'度假')))throw Error('Vacation style mismatch');
+    }
     for(const item of picked)if(!planner.unsuitable(item,plan.climate)&&!plan.items.some(i=>i.id===item.id))throw Error('Selected garment omitted');
     return plan;
   }catch{

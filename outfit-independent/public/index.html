@@ -111,20 +111,6 @@
 
     <!-- 今日搭配 -->
     <section class="page" id="page-today">
-      <div class="hero">
-        <div class="hero-copy">
-          <div class="hero-tag">为今天的你，配一套</div>
-          <h1>风格由你定，<br><em>搭配交给我</em>。</h1>
-          <p>按风格、场合和温度，从你的衣橱挑选整套搭配；缺少的单品提供图片参考和淘宝搜索入口。</p>
-        </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="art-ring"></div>
-          <div class="art-card a1"><i></i><span>TOP</span></div>
-          <div class="art-card a2"><i></i><span>BOTTOM</span></div>
-          <div class="art-card a3"><i></i><span>ACCENT</span></div>
-        </div>
-      </div>
-
       <div class="outfit-mode-tabs" role="tablist" aria-label="选择搭配方式">
         <button type="button" id="autoModeTab" role="tab" aria-selected="true" aria-controls="autoBuilder" data-outfit-mode="auto" class="on">智能搭配</button>
         <button type="button" id="manualModeTab" role="tab" aria-selected="false" aria-controls="manualBuilder" data-outfit-mode="manual" tabindex="-1">自己滑着搭</button>
@@ -148,7 +134,7 @@
           <div class="card-head"><h3>设定今天的场景</h3><span class="step">STEP 01</span></div>
           <label class="lbl">想要的风格</label>
           <div class="chips" id="styleChips"></div>
-          <p class="style-reference-hint">「参考图风格」归纳了 17 张穿搭拼图中的复古学院、甜酷日常与清爽衬衫元素，可用于本套配色和版型。</p>
+
           <label class="lbl">要出席的场合</label>
           <div class="chips" id="occasionChips"></div>
           <div class="row-2">
@@ -181,7 +167,7 @@
           <div class="gen-status" id="genStatus"></div>
         </div>
 
-        <div class="card reference">
+        <div class="card reference" id="personalReference">
           <div class="card-head"><h3>我的参考</h3><span class="step">PROFILE</span></div>
           <div class="face-wrap"><div class="face" id="facePreview"><svg><use href="#i-user"/></svg></div></div>
           <div class="face-note" id="faceNote">还没有上传面部参考照片</div>
@@ -232,7 +218,7 @@
             <label>建议季节 <select id="itemSeason" class="inp">
               <option value="四季">四季</option><option value="春季">春季</option><option value="夏季">夏季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="春秋">春秋</option><option value="春夏">春夏</option><option value="秋冬">秋冬</option>
             </select></label>
-            <label class="span2">风格标签（用逗号分隔） <input id="itemTags" class="inp" placeholder="例如：极简, 通勤, 宽松" maxlength="80"></label>
+            <label class="span2">风格标签（用逗号分隔） <input id="itemTags" class="inp" placeholder="例如：极简, 复古, 宽松" maxlength="80"></label>
             <label class="span2">备注（可选） <input id="itemNote" class="inp" placeholder="例如：版型偏长，适合塞进裤腰" maxlength="80"></label>
           </div>
         </div>
@@ -268,21 +254,6 @@
           <div class="chips" id="pfStyleChips"></div>
           <button type="button" class="btn-primary full" id="saveProfileBtn">保存我的档案</button>
           <div class="save-note" id="profileSaveNote"></div>
-          <div class="card-head sub"><h3>数据备份与迁移</h3></div>
-          <p class="hint">导出包含档案、衣橱、收藏和照片，请妥善保管。备份只能导入空账号，避免覆盖已有数据。</p>
-          <div class="upload-line"><button type="button" class="btn-ghost" id="exportBackupBtn">导出完整备份</button><label class="btn-ghost face-picker">导入备份<input id="importBackup" type="file" accept="application/json,.json" aria-label="导入穿搭备份"></label></div>
-          <p class="face-upload-status" id="importStatus" role="status"></p>
-          <div class="card-head sub"><h3>淘宝商品连接</h3></div>
-          <p class="hint">普通淘宝网页搜索可直接使用；将商品实拍自动取回 App 的接口是可选功能，需另外配置。</p>
-          <a class="btn-ghost" href="taobao-connect.html" target="_blank" rel="noopener">淘宝搜索与可选接口设置</a>
-          <div class="card-head sub"><h3>后台服务状态</h3><button id="refreshServicesBtn" type="button" class="btn-ghost">重新检查</button></div>
-          <dl id="serviceStatusList" class="service-status-list"></dl><p id="serviceStatusMessage" class="hint" role="status"></p>
-          <div class="card-head sub"><h3>修改登录密码</h3></div>
-          <p class="hint">修改成功后，当前账号的所有登录会话都会退出，需要使用新密码重新登录。</p>
-          <label class="lbl" for="passwordCurrent">当前密码</label><input id="passwordCurrent" class="inp" type="password" autocomplete="current-password" minlength="10" maxlength="200">
-          <label class="lbl" for="passwordNew">新密码（10–200 位）</label><input id="passwordNew" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
-          <label class="lbl" for="passwordConfirm">再次输入新密码</label><input id="passwordConfirm" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
-          <button id="changePasswordBtn" class="btn-ghost full" type="button">修改密码并重新登录</button><p id="passwordStatus" class="hint" role="status"></p>
         </div>
         <div class="card">
           <div class="card-head"><h3>面部参考照片</h3><span class="step">FACE</span></div>
@@ -300,11 +271,40 @@
             <button type="button" class="btn-ghost" id="removeFaceBtn" disabled>移除参考照片</button>
           </div>
           <p class="face-upload-status" id="faceUploadStatus" role="status" aria-live="polite">点击「拍照」或「从相册选」，选好后预览并保存。</p>
+          <div class="card-head"><h3>全身参考照</h3></div>
+          <div class="upload-line">
+            <label class="btn-ghost face-picker">
+              <span>从相册选全身参考照</span>
+              <input type="file" id="fullBodyImage" accept="image/*" aria-describedby="fullBodyStatus">
+            </label>
+          </div>
+          <p class="face-upload-status" id="fullBodyStatus" role="status"></p>
           <div class="privacy boxed">
             <b>这张照片会被用来做什么？</b>
             <p>它作为你自己的穿搭参考展示在搭配页，帮助你在挑选领口形状、帽子、眼镜和配色时有个直观对照。系统会结合你填写的肤色、发色给出配色建议，但不会识别人脸身份、不会做人脸比对，也不会公开给其他用户。</p>
             <p>照片存放在你的私有存储空间，随时可以重新上传覆盖。</p>
           </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>修改登录密码</h3></div>
+          <p class="hint">修改成功后，当前账号的所有登录会话都会退出，需要使用新密码重新登录。</p>
+          <label class="lbl" for="passwordCurrent">当前密码</label><input id="passwordCurrent" class="inp" type="password" autocomplete="current-password" minlength="10" maxlength="200">
+          <label class="lbl" for="passwordNew">新密码（10–200 位）</label><input id="passwordNew" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
+          <label class="lbl" for="passwordConfirm">再次输入新密码</label><input id="passwordConfirm" class="inp" type="password" autocomplete="new-password" minlength="10" maxlength="200">
+          <button id="changePasswordBtn" class="btn-ghost full" type="button">修改密码并重新登录</button><p id="passwordStatus" class="hint" role="status"></p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>后台服务状态</h3><button id="refreshServicesBtn" type="button" class="btn-ghost">重新检查</button></div>
+          <dl id="serviceStatusList" class="service-status-list"></dl><p id="serviceStatusMessage" class="hint" role="status"></p>
+          <div class="card-head sub"><h3>淘宝商品连接</h3></div>
+          <p class="hint">普通淘宝网页搜索可直接使用；将商品实拍自动取回 App 的接口是可选功能，需另外配置。</p>
+          <a class="btn-ghost" href="taobao-connect.html" target="_blank" rel="noopener">淘宝搜索与可选接口设置</a>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>数据备份与迁移</h3></div>
+          <p class="hint">导出包含档案、衣橱、收藏和照片，请妥善保管。备份只能导入空账号，避免覆盖已有数据。</p>
+          <div class="upload-line"><button type="button" class="btn-ghost" id="exportBackupBtn">导出完整备份</button><label class="btn-ghost face-picker">导入备份<input id="importBackup" type="file" accept="application/json,.json" aria-label="导入穿搭备份"></label></div>
+          <p class="face-upload-status" id="importStatus" role="status"></p>
         </div>
       </div>
     </section>

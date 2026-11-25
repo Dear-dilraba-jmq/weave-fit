@@ -1,6 +1,6 @@
 /* 穿搭魔镜 Service Worker
    只缓存本站静态文件；登录 / 数据库 / 存储 / 大模型等云接口一律走网络，绝不缓存。 */
-var CACHE = 'outfit-mirror-independent-v15';
+var CACHE = 'outfit-mirror-independent-v25';
 var STATIC = {
   '/': true,
   '/index.html': true,

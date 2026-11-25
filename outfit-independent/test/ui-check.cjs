@@ -41,7 +41,7 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     dom=await page();let w=dom.window,$=s=>w.document.querySelector(s);
     await until(()=>!$('#authView').hidden);
     $('[data-auth-mode="register"]').click();$('#localUsername').value='ui-synthetic';$('#localPassword').value='synthetic-long-password';$('#localLoginBtn').click();
-    await until(()=>!$('#appView').hidden && $('#styleChips').children.length===10);
+    await until(()=>!$('#appView').hidden && [...$('#styleChips').children].some(chip=>chip.textContent==='田园复古'));
     assert.match($('#engineState').textContent,/规则/);
     $('[data-nav="profile"]').click();$('#pfNickname').value='独立测试';
     const image=new File([png],'face.png',{type:'image/png'});
@@ -49,6 +49,8 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     $('#faceImage').dispatchEvent(new w.Event('change',{bubbles:true}));
     await until(()=>!$('#uploadFaceBtn').disabled);$('#uploadFaceBtn').click();
     await until(()=>$('#faceUploadStatus').textContent.includes('已保存'));
+    assert.equal($('#sideName').textContent,'独立测试');
+    assert.equal($('#sideAvatar').textContent,'独');
     assert.match($('#facePreview2 img').getAttribute('src'),/^\/api\/files/);
     assert.equal((await w.fetch($('#facePreview2 img').getAttribute('src'))).status,200);
     console.log('PASS: native photo selection uploads through the real independent backend');
@@ -57,6 +59,7 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     await until(()=>!$('#saveProfileBtn').disabled&&$('#profileSaveNote').textContent.includes('已保存'));
     dom.window.close();dom=await page();w=dom.window;$=s=>w.document.querySelector(s);
     await until(()=>!$('#appView').hidden && $('#pfNickname').value==='独立测试');
+    assert.equal($('#sideName').textContent,'独立测试');
     assert.ok($('#facePreview2 img'));
     $('[data-nav="closet"]').click();$('#openAddBtn').click();$('#itemName').value='测试衬衫';
     Object.defineProperty($('#itemImage'),'files',{value:[new File([png],'shirt.png',{type:'image/png'})],configurable:true});
@@ -94,9 +97,9 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     await until(()=>!!$('#tryonBox .tryon-image'));
     assert.match($('#tryonBox .tryon-image').getAttribute('src'),/^\/api\/files/);
     assert.equal($('#autoTryon').disabled,true);
-    assert.ok($('#resultArea .tryon-visual'));
+    assert.ok($('#resultArea .tryon-visual'));assert.equal($('#resultArea').lastElementChild.id,'tryonBox');assert.equal($('#personalReference').hidden,true);
     await sleep(50);assert.equal(posterUploads,uploadsBeforeReload,'viewing a saved outfit must not generate/upload a new poster');
-    console.log('PASS: saved personal full-body image appears first after reload; missing API is clearly disabled');
+    console.log('PASS: saved personal full-body image appears last after reload; missing API is clearly disabled');
     console.log('PASS: session reload restores face photo; rules, poster storage, collection and backup work');
     dom.window.close();failRecordReads=true;dom=await page();w=dom.window;$=s=>w.document.querySelector(s);
     await until(()=>!$('#appLoadError').hidden);assert.equal($('#generateBtn').disabled,true);assert.equal($('#saveProfileBtn').disabled,true);

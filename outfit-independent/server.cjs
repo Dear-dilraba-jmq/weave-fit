@@ -93,13 +93,13 @@ function createApp(options = {}) {
       if (importedPaths && !importedPaths.has(value)) fail(400, '备份缺少引用的图片，请补齐后导入');
       if (!importedPaths && !db.prepare('SELECT 1 FROM files WHERE owner=? AND path=?').get(owner,value)) fail(400,'引用的图片不存在，请重新上传');
     }
-    if (table === 'profiles') check(row.face_photo_path);
+    if (table === 'profiles') { check(row.face_photo_path); check(row.full_body_photo_path); }
     if (table === 'wardrobe_items') {
       check(row.image_path);
       check(row.original_path);
     }
     if (table === 'outfits') {
-      const imageFields = new Set(['face_photo_path','image_path','original_path','tryonImage','lookImage']);
+      const imageFields = new Set(['full_body_photo_path','face_photo_path','image_path','original_path','tryonImage','lookImage']);
       const visit = value => {
         if (Array.isArray(value)) { value.forEach(visit); return; }
         if (!value || typeof value !== 'object') return;
@@ -112,7 +112,7 @@ function createApp(options = {}) {
     }
   }
   function imageReferenced(owner,target) {
-    const imageFields=new Set(['face_photo_path','image_path','original_path','tryonImage','lookImage']);
+    const imageFields=new Set(['full_body_photo_path','face_photo_path','image_path','original_path','tryonImage','lookImage']);
     const visit=value=>{
       if(Array.isArray(value))return value.some(visit);
       if(!value||typeof value!=='object')return false;
@@ -203,7 +203,7 @@ function createApp(options = {}) {
       if (route.startsWith('/api/')) {
         if (!active) fail(401,'请先登录');
         const owner = active.user.id;
-        if(route==='/api/status')return send(200,{data:{version:'1.3.0',schemaVersion:1,uptimeSeconds:Math.floor((Date.now()-started)/1000),storage:{engine:'sqlite',ready:true},planner:{ready:true,mode:'local'},garment:{modelPresent:fs.existsSync(path.join(__dirname,'models/Xenova/segformer_b2_clothes/onnx/model_quantized.onnx'))},itemRecognition:{modelPresent:require('./item-recognizer.cjs').modelReady(),mode:'local'},textAI:{configured:llmConfigured()},tryon:{configured:!!(config.IMAGE_API_KEY||config.OPENAI_API_KEY)},shopping:{configured:require('./shopping.cjs').configured(config)}}});
+        if(route==='/api/status')return send(200,{data:{version:'1.3.0',schemaVersion:1,uptimeSeconds:Math.floor((Date.now()-started)/1000),storage:{engine:'sqlite',ready:true},planner:{ready:true,mode:'local'},garment:{modelPresent:fs.existsSync(path.join(__dirname,'models/Xenova/segformer_b2_clothes/onnx/model_quantized.onnx'))},itemRecognition:{modelPresent:require('./item-recognizer.cjs').modelReady(),mode:'local'},textAI:{configured:llmConfigured()},tryon:{configured:!!(require('./fashn-local.cjs').ready(config)||config.IMAGE_API_KEY||config.OPENAI_API_KEY)},shopping:{configured:require('./shopping.cjs').configured(config)}}});
         if(route==='/api/auth/password'){
           rate('password:'+owner,5,600000);
           const input=await jsonBody(req,16384);
@@ -234,11 +234,13 @@ function createApp(options = {}) {
         }
         if(route==='/api/tryon/status'&&req.method==='GET'){
           const cfg=require('./tryon.cjs').settings(config);
-          return send(200,{configured:!!cfg.key,provider:new URL(cfg.endpoint).hostname,model:cfg.model});
+          return send(200,{configured:!!(cfg.local||cfg.key),local:!!cfg.local,provider:cfg.local?'本机':new URL(cfg.endpoint).hostname,model:cfg.model});
         }
         if(route==='/api/tryon'&&req.method==='POST'){
           const input=await jsonBody(req,131072);
-          if(input.consent!==true)fail(400,'请先确认向图像服务发送面部照片、身材资料和衣服参考图');
+          const local=require('./fashn-local.cjs').ready(config);
+          if(input.local===true&&!local)fail(503,'本机 FASHN 暂不可用，请稍后重试');
+          if(!local&&input.consent!==true)fail(400,'请先确认向图像服务发送面部照片、身材资料和衣服参考图');
           if(tryonJobs.has(owner))fail(409,'当前穿搭图仍在生成，请稍候');
           rate('tryon:'+owner,3,600000);
           tryonJobs.add(owner);

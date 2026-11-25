@@ -1,10 +1,12 @@
 'use strict';
 const crypto=require('node:crypto');
 const sharp=require('sharp');
+const local=require('./fashn-local.cjs');
 const planner=require('./public/outfit-plan.js');
 const categories=['上装','下装','外套','连衣裙','鞋履','包袋','配饰','其他'];
 function error(status,message){throw Object.assign(new Error(message),{status});}
 function settings(env={}){
+  if(local.ready(env))return {local:true,model:'FASHN VTON v1.5'};
   let endpoint;
   try{endpoint=new URL(env.IMAGE_API_URL||'https://api.openai.com/v1/images/edits');}catch{error(503,'图像服务地址配置不正确，请检查本机设置');}
   if((endpoint.protocol!=='https:'&&!(endpoint.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(endpoint.hostname)))||endpoint.username||endpoint.password||endpoint.hash)error(503,'图像服务地址必须使用 HTTPS 或本机 HTTP，且不能含账号信息');
@@ -56,22 +58,24 @@ async function generateTryon({db,owner,plan,env,fetchImpl=fetch}){
   const inputPlan=plan;
   plan=normalizePlan(plan);
   const config=settings(env);
-  if(!config.key)error(503,'尚未配置图像生成 API；聊天中的样例可以查看，但 App 自动生成需要配置图像服务');
-  const endpoint=new URL(config.endpoint);
+  if(!config.local && !config.key)error(503,'尚未配置图像生成 API；聊天中的样例可以查看，但 App 自动生成需要配置图像服务');
+  const endpoint=config.local?null:new URL(config.endpoint);
   const p=db.prepare('SELECT payload FROM records WHERE owner=? AND collection=?').get(owner,'profiles');
   const profile=p&&JSON.parse(p.payload);
-  if(!profile?.face_photo_path||!profile.height_cm||!profile.weight_kg)error(400,'请先在个人档案保存面部照片、身高和体重');
-  const face=db.prepare('SELECT * FROM files WHERE owner=? AND path=?').get(owner,profile.face_photo_path);
-  if(!face)error(400,'面部参考照片不存在，请重新上传');
+  if(!config.local&&(!profile?.face_photo_path||!profile.height_cm||!profile.weight_kg))error(400,'请先在个人档案保存面部照片、身高和体重');
+  const personPath=config.local?profile?.full_body_photo_path:profile?.face_photo_path;
+  const face=db.prepare('SELECT * FROM files WHERE owner=? AND path=?').get(owner,personPath||'');
+  if(!face)error(400,config.local?'请先在个人档案保存全身参考照':'面部参考照片不存在，请重新上传');
   const ids=[...new Set(plan.items.map(i=>Number(i.id)))];
   if(ids.some(i=>!Number.isSafeInteger(i)||i<1))error(400,'单品编号不正确');
-  const refs=[],items=[],referenceMap=[],sources=[];
+  const refs=[],items=[],referenceMap=[],sources=[],localPieces=[];
   for(const id of ids){
     const row=db.prepare('SELECT payload FROM records WHERE owner=? AND collection=? AND id=?').get(owner,'wardrobe_items',id);
     if(!row)error(403,'搭配包含不属于当前账号的单品');
     const item={...JSON.parse(row.payload),id};items.push(item);
     const f=db.prepare('SELECT * FROM files WHERE owner=? AND path=?').get(owner,item.original_path||item.image_path||'');
     const hasPhoto=!!f&&refs.length<5;
+    if(config.local&&f)localPieces.push({item,data:f.data});
     if(hasPhoto){refs.push(f);referenceMap.push({image:refs.length+1,name:item.name,category:item.category});}
     sources.push({name:item.name,category:item.category,ownership:'owned',reference:hasPhoto?'photo':'description'});
   }
@@ -91,6 +95,33 @@ async function generateTryon({db,owner,plan,env,fetchImpl=fetch}){
     if(!proposed||typeof proposed.name!=='string'||!proposed.name.trim()||typeof proposed.category!=='string')error(400,'推荐衣服缺少名称或类别，请重新生成搭配');
     sources.push({name:proposed.name,category:proposed.category,ownership:'suggested',reference:'generated'});
   }
+  let image;
+  let tryonNote;
+  if(config.local){
+    const ref=require('./public/look-reference.js');
+    const files=require('node:fs');
+    const nodePath=require('node:path');
+    const steps=[];
+    const apparel=[...items,...plan.gaps].filter(piece=>['上装','下装','外套','连衣裙'].includes(piece.category));
+    const staged=apparel.some(piece=>piece.category==='连衣裙')
+      ? [['连衣裙']]
+      : [['下装'],['外套','上装']];
+    for(const kinds of staged){
+      const candidates=kinds.flatMap(kind=>apparel.filter(piece=>piece.category===kind));
+      for(const piece of candidates){
+        const kind=piece.category;
+        const asset=piece.id?null:ref.referenceAsset(piece);
+        const data=piece.id?localPieces.find(record=>record.item.id===piece.id)?.data:asset&&files.readFileSync(nodePath.join(__dirname,'public',asset.src));
+        if(!data)continue;
+        steps.push({category:kind==='连衣裙'?'one-pieces':kind==='下装'?'bottoms':'tops',data,piece});
+        break;
+      }
+    }
+    if(!steps.length)error(422,'这套搭配没有可用于试穿的服装照片。请给衣橱单品上传照片后再试。');
+    image=await local.render(env,face.data,steps);
+    const skipped=apparel.filter(piece=>!steps.some(step=>step.piece===piece)).map(piece=>piece.name);
+    tryonNote='已试穿：'+steps.map(step=>step.piece.name).join('、')+(skipped.length?'。仅在搭配清单展示：'+skipped.join('、'):'')+'。鞋包见单品图。';
+  }else{
   const form=new FormData();
   form.set('model',config.model);form.set('size','1024x1536');form.set('quality','medium');form.set('n','1');
   form.set('prompt',promptFor(profile,plan,items,referenceMap));
@@ -107,11 +138,11 @@ async function generateTryon({db,owner,plan,env,fetchImpl=fetch}){
   const value=await readImageResponse(response);
   const data=value.data?.[0]?.b64_json;
   if(typeof data!=='string'||data.length>24*1024*1024)error(502,'图像服务没有返回可保存的图片');
-  let image;
   try{image=await sharp(Buffer.from(data,'base64'),{limitInputPixels:8e6}).webp({quality:94}).toBuffer();}catch{error(502,'图像服务返回的图片无法读取');}
+  }
   if(image.length>8*1024*1024)error(502,'生成图片过大，请稍后重试');
   const path='users/'+owner+'/tryon/'+crypto.randomUUID()+'.webp';
-  const payload={...plan,tryonImage:path,tryonSource:'image-api',tryonItems:sources,tryonProfile:{height_cm:profile.height_cm,weight_kg:profile.weight_kg,body_shape:profile.body_shape},tryonCreatedAt:new Date().toISOString()};
+  const payload={...plan,tryonImage:path,tryonSource:config.local?'fashn-local':'image-api',...(tryonNote?{tryonNote}:{}),tryonItems:sources,tryonProfile:{height_cm:profile.height_cm,weight_kg:profile.weight_kg,body_shape:profile.body_shape},tryonCreatedAt:new Date().toISOString()};
   delete payload.savedId;
   const created=new Date().toISOString();
   const row={title:String(plan.title||'我的真人穿搭').slice(0,80),style:String(plan.style||''),occasion:String(plan.occasion||''),payload};
