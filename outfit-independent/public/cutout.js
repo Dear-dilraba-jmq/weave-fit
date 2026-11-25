@@ -84,9 +84,28 @@
     return { blob: await response.blob(), mode: 'garment', width: 1080, height: 1080 };
   }
 
+  async function analyze(file,options) {
+    options=options||{};var response;
+    for(var attempt=0;attempt<8;attempt++){
+      if(options.signal&&options.signal.aborted)throw new DOMException('识别已取消','AbortError');
+      response=await window.OutfitBackend.fetch('/api/wardrobe/analyze'+(options.category?'?category='+encodeURIComponent(options.category):''),{method:'POST',signal:options.signal,headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
+      if(response.status!==429||!response.headers.get('Retry-After')||attempt===7)break;
+      await response.json().catch(function(){return {};});await new Promise(function(resolve){setTimeout(resolve,1000);});
+    }
+    var value=await response.json();if(!response.ok||!value.data)throw Error(value.error&&value.error.message||'照片识别暂不可用，请重试');
+    var data=value.data,blob=null;
+    if(data.image&&data.image.contentType==='image/png'&&typeof data.image.base64==='string'){
+      if(data.image.base64.length>8*1024*1024)throw Error('单品图过大，请换一张清晰照片');
+      var binary=atob(data.image.base64),bytes=new Uint8Array(binary.length);for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      blob=new Blob([bytes],{type:'image/png'});
+    }
+    return {attributes:data.attributes,blob:blob,mode:blob?'garment':'raw',message:data.cutoutMessage||''};
+  }
+
   window.OutfitImage = {
     prepare: prepare,
     cutout: cutout,
+    analyze: analyze,
     toBlob: toBlob,
     loadBitmap: loadBitmap,
     blobUrl: function (blob) { return URL.createObjectURL(blob); }

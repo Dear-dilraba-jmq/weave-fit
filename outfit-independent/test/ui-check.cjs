@@ -20,7 +20,7 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     w.scrollTo=()=>{};w.Element.prototype.scrollIntoView=()=>{};w.confirm=()=>true;
     w.URL.createObjectURL=URL.createObjectURL;w.URL.revokeObjectURL=URL.revokeObjectURL;
     w.AbortController=AbortController;w.AbortSignal=AbortSignal;
-    w.OutfitImage={prepare:async file=>({blob:file}),cutout:async()=>{throw Error('模型暂时不可用（测试）');}};
+    w.OutfitImage={prepare:async file=>({blob:file}),analyze:async()=>({attributes:{name:'白色长袖衬衫',category:'上装',color:'白色',season:'春秋',tags:['长袖'],warnings:[]},blob:null,message:'模型暂时不可用（测试），保留原图'})};
     w.OutfitLook={render:async()=>new Blob([png],{type:'image/png'})};
     w.fetch=async(u,options={})=>{
       const target=new URL(u,base);assert.equal(target.origin,base,'No outgoing provider requests');

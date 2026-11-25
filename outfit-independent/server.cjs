@@ -145,6 +145,7 @@ function createApp(options = {}) {
       }
       const methods={'/api/health':['GET'],'/api/auth/register':['POST'],'/api/auth/login':['POST'],'/api/auth/logout':['POST'],'/api/auth/session':['GET'],'/api/auth/password':['POST'],'/api/status':['GET'],'/api/shopping/status':['GET'],'/api/shopping/search':['POST'],'/api/tryon/status':['GET'],'/api/tryon':['POST'],'/api/garment':['POST'],'/api/records':['POST'],'/api/files':['GET','HEAD','PUT','DELETE'],'/api/models':['GET'],'/api/chat':['POST'],'/api/backup':['GET'],'/api/import':['POST'],'/api/outfits/generate':['POST']};
       methods['/api/outfits/manual']=['POST'];
+      methods['/api/wardrobe/analyze']=['POST'];
       if(methods[route]&&!methods[route].includes(req.method)){res.setHeader('Allow',methods[route].join(', '));fail(405,'此接口不支持该请求方式');}
       if (!['GET','HEAD','POST','PUT','DELETE'].includes(req.method)) fail(405,'不支持的请求方式');
       if (!['GET','HEAD'].includes(req.method)) {
@@ -202,7 +203,7 @@ function createApp(options = {}) {
       if (route.startsWith('/api/')) {
         if (!active) fail(401,'请先登录');
         const owner = active.user.id;
-        if(route==='/api/status')return send(200,{data:{version:'1.2.0',schemaVersion:1,uptimeSeconds:Math.floor((Date.now()-started)/1000),storage:{engine:'sqlite',ready:true},planner:{ready:true,mode:'local'},garment:{modelPresent:fs.existsSync(path.join(__dirname,'models/Xenova/segformer_b2_clothes/onnx/model_quantized.onnx'))},textAI:{configured:llmConfigured()},tryon:{configured:!!(config.IMAGE_API_KEY||config.OPENAI_API_KEY)},shopping:{configured:require('./shopping.cjs').configured(config)}}});
+        if(route==='/api/status')return send(200,{data:{version:'1.3.0',schemaVersion:1,uptimeSeconds:Math.floor((Date.now()-started)/1000),storage:{engine:'sqlite',ready:true},planner:{ready:true,mode:'local'},garment:{modelPresent:fs.existsSync(path.join(__dirname,'models/Xenova/segformer_b2_clothes/onnx/model_quantized.onnx'))},itemRecognition:{modelPresent:require('./item-recognizer.cjs').modelReady(),mode:'local'},textAI:{configured:llmConfigured()},tryon:{configured:!!(config.IMAGE_API_KEY||config.OPENAI_API_KEY)},shopping:{configured:require('./shopping.cjs').configured(config)}}});
         if(route==='/api/auth/password'){
           rate('password:'+owner,5,600000);
           const input=await jsonBody(req,16384);
@@ -254,6 +255,14 @@ function createApp(options = {}) {
           const result=await processGarment(input,category);
           res.writeHead(200,{'Content-Type':'image/png','Content-Length':result.buffer.length,'X-Outfit-Image-Mode':'garment'});
           return res.end(result.buffer);
+        }
+        if(route==='/api/wardrobe/analyze'){
+          rate('analyze:'+owner,12,60000);
+          const category=url.searchParams.get('category')||undefined;
+          if(category&&!validation.categories.includes(category))fail(400,'衣物类别不正确');
+          const input=await body(req,8*1024*1024);await verifiedImage(input);
+          try{return send(200,{data:await (options.itemRecognize||require('./item-recognizer.cjs').recognizeItem)(input,{category})});}
+          catch(e){if(e.code==='IMAGE_BUSY')res.setHeader('Retry-After','1');throw e;}
         }
         if (route === '/api/records' && req.method === 'POST') {
           const q = await jsonBody(req);

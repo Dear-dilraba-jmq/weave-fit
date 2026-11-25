@@ -34,7 +34,7 @@ async function launch({open=true}={}){
   const logFile=path.join(logs,'server.log');
   if(!await ready(cfg.url)){
     const diagnostic=require('./scripts/diagnose.cjs').diagnose();
-    if(!diagnostic.coreReady)throw Error('运行环境不完整：'+diagnostic.checks.filter(c=>!c.ready&&c.name!=='本地衣物模型').map(c=>c.name).join('、')+'。请运行 node scripts/diagnose.cjs 检查。');
+    if(!diagnostic.coreReady)throw Error('运行环境不完整：'+diagnostic.checks.filter(c=>!c.ready&&!c.optional).map(c=>c.name).join('、')+'。请运行 node scripts/diagnose.cjs 检查。');
     await dailyBackup(dataDir);
     if(fs.existsSync(logFile)&&fs.statSync(logFile).size>2*1024*1024)fs.renameSync(logFile,path.join(logs,'server-'+Date.now()+'.log'));
     const fd=fs.openSync(logFile,'a');let child;

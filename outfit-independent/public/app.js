@@ -37,7 +37,8 @@
     lookUrls: {},         // 效果图 path -> 本地 blob URL
     tryonConfig: null, tryonGenerating: false, dataReady:false, services:null,
     itemSaving:false, editingItemId:null, profilePromise:null, deleting:new Set(), savingBackup:false,
-    outfitMode:'auto', manualChoices:{}, manualTimers:{}, manualBusy:false, planRequest:0
+    outfitMode:'auto', manualChoices:{}, manualTimers:{}, manualBusy:false, planRequest:0,
+    itemManualFields:{},itemAutoValues:{}
   };
   var accountVersion = 0;
   function accountTicket() { return {version:accountVersion,owner:state.session && state.session.user.id}; }
@@ -54,6 +55,7 @@
     state.modelId=null;state.lastGenAt=0;state.generating=false;state.tryonGenerating=false;state.tryonConfig=null;
     state.dataReady=false;state.services=null;state.itemSaving=false;state.editingItemId=null;state.profilePromise=null;state.deleting=new Set();state.savingBackup=false;
     state.filter='全部';state.style='参考图风格';state.occasion='日常通勤';state.planVariant=0;state.profileSignature='';
+    state.itemManualFields={};state.itemAutoValues={};
     $('#resultArea').innerHTML='';$('#resultArea').hidden=true;
     $('#toastBox').innerHTML='';$('#genStatus').textContent='';$('#genStatus').className='gen-status';
     $('#generateBtn').disabled=false;$('#generateBtn').textContent='生成我的搭配';
@@ -70,6 +72,7 @@
     ['passwordCurrent','passwordNew','passwordConfirm'].forEach(function(id){$('#'+id).value='';});$('#passwordStatus').textContent='';$('#changePasswordBtn').disabled=false;
     $('#itemPanelTitle').textContent='新增一件单品';$('#saveProfileBtn').disabled=false;$('#exportBackupBtn').disabled=false;
     $$('#addPanel input, #addPanel select, #addPanel button').forEach(function(el){el.disabled=false;});
+    $('#autoFillItemBtn').disabled=true;$('#itemAutoStatus').textContent='上传照片后会自动填写，检查一下就能保存；也可直接手动录入。';
     $('#sideName').textContent=session ? session.user.name : '我的账号';$('#sideAvatar').textContent=session ? String(session.user.name).slice(0,1) : '我';
     renderAll();
   }
@@ -501,6 +504,7 @@
   /* ---------------- 拍照 / 相册 / 智能去背 ---------------- */
   function clearPendingImage() {
     var p = state.pendingImage;
+    if(p&&p.abort)p.abort.abort();
     if (p && p.urls) Object.keys(p.urls).forEach(function (k) {
       if (p.urls[k]) { try { URL.revokeObjectURL(p.urls[k]); } catch (e) {} }
     });
@@ -511,13 +515,30 @@
     $('#uploadPreview').innerHTML = '<img src="' + esc(url) + '" alt="照片预览">';
   }
 
-  async function handleItemImage(file) {
+  var AUTO_ITEM_FIELDS=[{id:'itemName',key:'name',initial:''},{id:'itemCategory',key:'category',initial:'上装'},{id:'itemColor',key:'color',initial:''},{id:'itemSeason',key:'season',initial:'四季'},{id:'itemTags',key:'tags',initial:''}];
+  function applyItemAttributes(attributes,pending){
+    if(!attributes||state.pendingImage!==pending)return;
+    AUTO_ITEM_FIELDS.forEach(function(field){
+      var el=$('#'+field.id),value=attributes[field.key];
+      if(field.key==='tags')value=Array.isArray(value)?value.join(', '):undefined;
+      if(typeof value!=='string'||pending.preserve[field.id]||state.itemManualFields[field.id]||el.value!==pending.initial[field.id])return;
+      if(el.tagName==='SELECT'&&!Array.from(el.options).some(function(o){return o.value===value;}))return;
+      el.value=value.slice(0,el.maxLength>0?el.maxLength:100);state.itemAutoValues[field.id]=el.value;
+    });
+    var warning=(Array.isArray(attributes.warnings)?attributes.warnings:[]).filter(function(s){return typeof s==='string';}).slice(0,3).join(' ');
+    $('#itemAutoStatus').textContent='已按照片自动填写，可直接检查并保存；手动修改的内容会保留。季节为款式建议。'+(warning?' '+warning:'');
+  }
+  async function handleItemImage(file,options) {
     if (!file) return;
     if (!allowedImage(file)) { toast('这张不是支持的图片格式', 'err'); return; }
+    options=options||{};if(options.force){state.itemManualFields={};state.itemAutoValues={};}
+    var initial={},preserve={};AUTO_ITEM_FIELDS.forEach(function(field){var value=$('#'+field.id).value;initial[field.id]=value;preserve[field.id]=!options.force&&(!!state.itemManualFields[field.id]||(value!==field.initial&&state.itemAutoValues[field.id]!==value));});
+    var category=preserve.itemCategory?initial.itemCategory:undefined;
     clearPendingImage();
     var bar = $('#cutoutBar');
     bar.hidden = false;
-    $('#cutoutStatus').textContent = '正在本机识别衣物、排除人物与杂物，制作白底单品图…';
+    $('#cutoutStatus').textContent = '正在本机识别衣物款式、主色和轮廓…';
+    $('#itemAutoStatus').textContent='正在自动起名、分类并建议季节，首次识别可能稍慢…';$('#autoFillItemBtn').disabled=true;
     $('#saveItemBtn').disabled = true;
     $('#itemCategory').disabled = true;
     $$('#cutoutBar .cutout-switch button').forEach(function (b) {
@@ -526,6 +547,7 @@
     });
     var pending = {
       rawFile: file, rawBlob: null, cutBlob: null, mode: 'skip', active: 'cut', processing: true,
+      initial:initial,preserve:preserve,abort:new AbortController(),
       urls: { raw: URL.createObjectURL(file), cut: '' }
     };
     state.pendingImage = pending;
@@ -535,27 +557,31 @@
       if (state.pendingImage !== pending) return;
       pending.rawBlob = prepared.blob;
       try {
-        var res = await window.OutfitImage.cutout(prepared.blob, $('#itemCategory').value);
+        if(!window.OutfitImage.analyze)throw Error('识别模块尚未更新，请刷新页面重试');
+        var res = await window.OutfitImage.analyze(prepared.blob,{category:category,signal:pending.abort.signal});
         if (state.pendingImage !== pending) return;
-        pending.cutBlob = res.blob;
-        pending.mode = res.mode;
-        pending.urls.cut = URL.createObjectURL(res.blob);
-        $('#cutoutStatus').textContent = '白底单品图已生成 · 请检查衣服是否完整，再保存到衣橱。遮挡部分不会自动补画。';
-        showItemPreview(pending.urls.cut);
+        applyItemAttributes(res.attributes,pending);
+        if(res.blob){
+          pending.cutBlob = res.blob;pending.mode = res.mode;pending.urls.cut = URL.createObjectURL(res.blob);
+          $('#cutoutStatus').textContent = '白底单品图已生成 · 请检查衣服是否完整，再保存到衣橱。遮挡部分不会自动补画。';showItemPreview(pending.urls.cut);
+        }else{pending.active='raw';$('#cutoutStatus').textContent='已保留原图：'+(res.message||'暂未生成完整的白底单品图。');}
       } catch (e) {
         if (state.pendingImage !== pending) return;
         pending.active = 'raw';
-        $('#cutoutStatus').textContent = '未生成单品图：' + e.message + '。当前保留原图，可修改类别后重新处理。';
+        $('#cutoutStatus').textContent = '未完成识别：' + e.message + '。当前保留原图，可稍后重试。';
+        $('#itemAutoStatus').textContent='自动填写暂未完成，已保留原图和你输入的内容，可重试或手动填写。';
       }
     } catch (e) {
       if (state.pendingImage !== pending) return;
       pending.active = 'raw';
       $('#cutoutStatus').textContent = '图片处理失败，将保留原图：' + (e.message || '');
+      $('#itemAutoStatus').textContent='图片暂时无法识别，可换一张清晰照片或手动填写。';
     }
     if (state.pendingImage !== pending) return;
     pending.processing = false;
     $('#saveItemBtn').disabled = false;
     $('#itemCategory').disabled = false;
+    $('#autoFillItemBtn').disabled=false;
     $$('#cutoutBar .cutout-switch button').forEach(function (b) {
       b.disabled = !!(b.dataset.cutmode === 'cut' && !state.pendingImage.cutBlob);
       b.classList.toggle('on', b.dataset.cutmode === state.pendingImage.active);
@@ -673,6 +699,7 @@
   /* ---------------- 衣橱增删改 ---------------- */
   function setItemFormBusy(busy){
     $$('#addPanel input, #addPanel select, #addPanel button').forEach(function(el){el.disabled=busy;});
+    $('#autoFillItemBtn').disabled=busy||!state.pendingImage||state.pendingImage.processing;
     $('#saveItemBtn').textContent=busy?'保存中…':state.editingItemId?'保存修改':'保存到衣橱';
   }
   function openItemEditor(id){
@@ -680,6 +707,8 @@
     var item=id?state.wardrobe.find(function(i){return String(i.id)===String(id);}):null;
     if(id&&!item){toast('这件单品已不存在，请刷新衣橱','warn');return;}
     clearPendingImage();state.editingItemId=item?item.id:null;
+    state.itemManualFields={};state.itemAutoValues={};if(item)AUTO_ITEM_FIELDS.forEach(function(field){state.itemManualFields[field.id]=true;});
+    $('#itemAutoStatus').textContent=item?'已有单品信息会保留。上传新照片可识别；如需覆盖填写，可点击“按照片重新填写”。':'上传照片后会自动填写，检查一下就能保存；也可直接手动录入。';
     $('#itemPanelTitle').textContent=item?'编辑衣橱单品':'新增一件单品';
     $('#itemName').value=item&&item.name||'';$('#itemCategory').value=item&&item.category||'上装';
     $('#itemColor').value=item&&item.color||'';$('#itemSeason').value=item&&item.season||'四季';
@@ -1077,6 +1106,7 @@
       if(!response.ok||!value.data)throw Error(value.error&&value.error.message||'后台状态读取失败');
       var s=value.data;state.services=s;
       var rows=[['数据存储',s.storage&&s.storage.ready?'SQLite 已就绪':'不可用'],['季节温度搭配',s.planner&&s.planner.ready?'本地后台已就绪':'不可用'],['衣物单品处理',s.garment&&s.garment.modelPresent?'本机模型文件已准备':'未准备，可保留原图'],['文字 AI',s.textAI&&s.textAI.configured?'已配置，调用时验证':'未配置，使用本地搭配规则'],['本人穿搭图',s.tryon&&s.tryon.configured?'已配置，生成时验证':'未配置，自动生图不可用'],['淘宝真实商品',s.shopping&&s.shopping.configured?'已配置，查询时验证':'未配置，可直接打开淘宝网页搜索']];
+      rows.splice(3,0,['单品自动填写',s.itemRecognition&&s.itemRecognition.modelPresent?'本机款式识别已准备':'款式模型未准备，可先按轮廓识别大类']);
       $('#serviceStatusList').innerHTML=rows.map(function(row){return '<div><dt>'+esc(row[0])+'</dt><dd>'+esc(row[1])+'</dd></div>';}).join('');
       $('#serviceStatusMessage').textContent='后台版本 '+s.version+' · 配置状态不代表外部服务已通过真实调用验证。';
     }catch(e){if(isCurrentAccount(ticket))$('#serviceStatusMessage').textContent=e.message||'后台检查失败，请重试';}
@@ -1159,7 +1189,7 @@
       if (nav) { switchNav(nav.dataset.nav); return; }
       var outfitMode=e.target.closest('[data-outfit-mode]');if(outfitMode){setOutfitMode(outfitMode.dataset.outfitMode);return;}
       var manualStep=e.target.closest('[data-manual-step]');if(manualStep){moveManual(manualStep.dataset.manualKey,Number(manualStep.dataset.manualStep));return;}
-      var manualAdd=e.target.closest('[data-manual-add]');if(manualAdd){switchNav('closet');openItemEditor(null);$('#itemCategory').value=manualAdd.dataset.manualAdd;return;}
+      var manualAdd=e.target.closest('[data-manual-add]');if(manualAdd){switchNav('closet');openItemEditor(null);$('#itemCategory').value=manualAdd.dataset.manualAdd;state.itemManualFields.itemCategory=true;return;}
 
       var chip = e.target.closest('.chip');
       if (chip && chip.parentElement) {
@@ -1230,9 +1260,12 @@
     $('#exportBackupBtn').addEventListener('click',function(){runTask(exportBackup);});
     $('#removeFaceBtn').addEventListener('click',function(){runTask(removeFace);});
     $('#itemCategory').addEventListener('change', function () {
+      state.itemManualFields.itemCategory=true;
       var p = state.pendingImage;
       if (p) handleItemImage(p.rawFile);
     });
+    ['itemName','itemColor','itemSeason','itemTags'].forEach(function(id){['input','change'].forEach(function(event){$('#'+id).addEventListener(event,function(){state.itemManualFields[id]=true;});});});
+    $('#autoFillItemBtn').addEventListener('click',function(){var p=state.pendingImage;if(p&&!p.processing)handleItemImage(p.rawFile,{force:true});});
     $('#retryGarmentBtn').addEventListener('click', function () {
       var p=state.pendingImage;
       if (p && !p.processing) handleItemImage(p.rawFile);

@@ -206,7 +206,7 @@
         <div class="add-grid">
           <div class="upload-box" id="uploadBox">
             <div class="upload-preview" id="uploadPreview"><svg><use href="#i-hanger"/></svg></div>
-            <div class="upload-txt"><b>制作白底单品图</b><small>先选类别，再上传 · 本机识别衣服，去除人物和背景</small></div>
+            <div class="upload-txt"><b>上传照片，自动整理单品</b><small>自动起名、分类、提取主色并建议季节</small></div>
             <div class="upload-btns">
               <label class="btn-mini face-picker" id="itemCameraBtn">拍照<input type="file" id="itemCamera" accept="image/*" capture="environment" aria-label="拍摄衣物照片"></label>
               <label class="btn-mini face-picker" id="itemAlbumBtn">相册选图<input type="file" id="itemImage" accept="image/*" aria-label="从相册选择衣物照片"></label>
@@ -221,21 +221,22 @@
             </div>
           </div>
           <div class="form-grid">
-            <label>名称 <input id="itemName" class="inp" placeholder="例如：米白廓形衬衫" maxlength="40"></label>
+            <div class="item-auto-summary"><p id="itemAutoStatus" role="status" aria-live="polite">上传照片后会自动填写，检查一下就能保存；也可直接手动录入。</p><button type="button" class="btn-ghost" id="autoFillItemBtn" disabled>按照片重新填写</button></div>
+            <label>名称 <input id="itemName" class="inp" placeholder="上传照片后自动起名，也可修改" maxlength="40"></label>
             <label>类别 <select id="itemCategory" class="inp">
               <option value="上装">上装</option><option value="下装">下装</option><option value="外套">外套</option>
               <option value="连衣裙">连衣裙 / 套装</option><option value="鞋履">鞋履</option>
               <option value="包袋">包袋</option><option value="配饰">配饰</option><option value="其他">其他</option>
             </select></label>
-            <label>颜色 <input id="itemColor" class="inp" placeholder="例如：米白 / 藏蓝" maxlength="20"></label>
-            <label>适合季节 <select id="itemSeason" class="inp">
+            <label>颜色 <input id="itemColor" class="inp" placeholder="自动提取单品主色" maxlength="20"></label>
+            <label>建议季节 <select id="itemSeason" class="inp">
               <option value="四季">四季</option><option value="春季">春季</option><option value="夏季">夏季</option><option value="秋季">秋季</option><option value="冬季">冬季</option><option value="春秋">春秋</option><option value="春夏">春夏</option><option value="秋冬">秋冬</option>
             </select></label>
             <label class="span2">风格标签（用逗号分隔） <input id="itemTags" class="inp" placeholder="例如：极简, 通勤, 宽松" maxlength="80"></label>
             <label class="span2">备注（可选） <input id="itemNote" class="inp" placeholder="例如：版型偏长，适合塞进裤腰" maxlength="80"></label>
           </div>
         </div>
-        <div class="add-actions"><span class="hint" id="addHint">照片是选填的，但上传后搭配效果更直观。</span><button type="button" class="btn-primary" id="saveItemBtn">保存到衣橱</button></div>
+        <div class="add-actions"><span class="hint" id="addHint">照片仅在本机识别；季节按可见款式估计，可随时修改。</span><button type="button" class="btn-primary" id="saveItemBtn">保存到衣橱</button></div>
       </div>
 
       <div class="closet-layout">

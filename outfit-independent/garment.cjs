@@ -119,11 +119,13 @@ async function productImage(input,category,options={}){
 }
 // A single CPU job at a time; no unbounded inference queue or photo retention.
 let busy=false;
-async function processGarment(input,category){
-  if(busy)throw Object.assign(new Error('正在处理另一张照片，请稍后重试'),{status:429});
+async function imageJob(work){
+  if(busy)throw Object.assign(new Error('正在处理另一张照片，请稍后重试'),{status:429,code:'IMAGE_BUSY'});
   busy=true;
-  try{return await productImage(input,category);}
-  catch(e){if(e.status)throw e;throw Object.assign(new Error('衣物处理暂不可用，请检查本地模型是否已安装，或尝试 JPG / PNG 照片'),{status:503});}
-  finally{busy=false;}
+  try{return await work();}finally{busy=false;}
 }
-module.exports={productImage,processGarment,selectedMask,cleanMask,bounds};
+async function processGarment(input,category){
+  try{return await imageJob(()=>productImage(input,category));}
+  catch(e){if(e.status)throw e;throw Object.assign(new Error('衣物处理暂不可用，请检查本地模型是否已安装，或尝试 JPG / PNG 照片'),{status:503});}
+}
+module.exports={productImage,processGarment,selectedMask,cleanMask,bounds,segment,imageJob};

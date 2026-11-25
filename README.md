@@ -28,10 +28,13 @@ node launch.cjs
 
 首次使用需注册本地账号。已有独立版用户要迁移到另一台电脑时，应从旧版个人档案导出自己的备份，再导入新电脑的空账号；本仓库不包含任何真实账号、衣橱数据库或个人照片。
 
-如需本机衣物分割，另行下载模型：
+上传单品照片后，完整 App 会自动建议名称、类别、主色和季节；可修改后保存，手动填写过的内容不会被自动结果覆盖。识别在本机进行，季节仅按可见款式估计。
+
+如需本机衣物分割和自动填写，另行下载两个模型：
 
 ```sh
 node scripts/setup-garment-model.cjs
+node scripts/setup-item-recognizer.cjs
 ```
 
 按温度生成规则搭配、手动组合、衣橱管理与收藏不需要外部 AI。自动本人全身穿搭图、文字 AI 和淘宝真实商品卡需要分别配置服务，见 [完整说明](outfit-independent/README.txt) 与 [环境配置示例](outfit-independent/.env.example)。密钥仅在本机配置。
