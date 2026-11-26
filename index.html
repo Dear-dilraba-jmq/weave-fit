@@ -3,60 +3,297 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f8f5ee">
-  <meta name="description" content="穿搭魔镜 Weave Fit：整理你的衣橱，按季节与温度寻找灵感。上装、下装、鞋子，左右滑动搭出自己的风格。">
+  <meta name="theme-color" content="#fdf8ee">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="穿搭魔镜 Weave Fit：打开你的数字衣橱，按季节、温度和场合找搭配灵感。上装、下装、鞋子三行独立滑动，自己搭出喜欢的样子。">
+  <meta property="og:title" content="穿搭魔镜 · Weave Fit">
+  <meta property="og:description" content="打开衣橱，把今天穿成喜欢的样子。整理衣橱、看天穿衣、三行滑动自己搭。">
   <title>穿搭魔镜 · Weave Fit</title>
   <link rel="icon" href="./outfit-independent/public/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./homepage/home.css">
+  <script src="./outfit-independent/public/style-guide.js" defer></script>
+  <script src="./outfit-independent/public/outfit-plan.js" defer></script>
   <script src="./outfit-independent/public/look-reference.js" defer></script>
+  <script src="./homepage/fabric.js" defer></script>
   <script src="./homepage/home.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">跳到主要内容</a>
-  <header class="header wrap">
-    <a class="brand" href="#"><span class="brand-icon" aria-hidden="true">W</span><span>穿搭魔镜<small>WEAVE FIT</small></span></a>
-    <nav aria-label="主导航"><a href="#features">功能</a><a href="#demo">搭配演示</a><a class="nav-source" href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-hanger" viewBox="0 0 512 512"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="28" d="M275.9 185.5A23 23 0 1 1 275.9 162.5M256 197v36M256 233 131 317h250L256 233"/><path stroke-width="16" d="M389 113v56M361 141h56"/></g></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 1.5 14 10l8.5 2-8.5 2-2 8.5-2-8.5L1.5 12 10 10z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="site-header" id="siteHeader">
+    <div class="wrap header-inner">
+      <a class="brand" href="#main" aria-label="穿搭魔镜 Weave Fit 首页"><span class="brand-mark" aria-hidden="true"><svg><use href="#i-hanger"/></svg></span><span class="brand-text">穿搭魔镜<small>WEAVE FIT</small></span></a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="#wardrobe" data-spy="wardrobe">衣橱</a>
+        <a href="#demo" data-spy="demo">魔镜试搭</a>
+        <a href="#climate" data-spy="climate">看天穿衣</a>
+        <a href="#flow" data-spy="flow">使用流程</a>
+        <a href="#start" data-spy="start">开始使用</a>
+        <a class="nav-source" href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
   </header>
+
   <main id="main">
-    <section class="hero wrap">
-      <div class="hero-copy">
-        <p class="eyebrow"><span></span> YOUR WARDROBE, YOUR WAY</p>
-        <h1>把今天，<br>穿成<em>喜欢的样子。</em></h1>
-        <p class="lead">衣橱里的熟悉单品，也能搭出新鲜感。<br>跟着季节找灵感，或左右滑一滑，自己决定今天怎么穿。</p>
-        <div class="hero-actions"><a class="button primary" href="#demo">试试搭配演示</a><a class="button secondary" href="#start">运行完整 App</a></div>
-        <p class="hero-note">给 20–30 岁的日常，一点轻松的穿衣灵感。</p>
-      </div>
-      <div class="hero-art" aria-label="米白针织衫、浅蓝牛仔裤与白色运动鞋的搭配参考">
-        <div class="art-circle"></div><span class="art-note">a little inspiration<br>for your everyday</span>
-        <figure class="hero-piece knit"><img src="./outfit-independent/public/reference-cream-knit-v1.png" alt="米白圆领针织衫参考" width="1254" height="1254"><figcaption>soft cream</figcaption></figure>
-        <figure class="hero-piece jeans"><img src="./outfit-independent/public/reference-light-blue-jeans-v1.png" alt="浅蓝直筒牛仔裤参考" width="1254" height="1254"><figcaption>easy blue</figcaption></figure>
-        <figure class="hero-piece sneakers"><img src="./outfit-independent/public/reference-white-sneakers-v1.png" alt="白色运动鞋参考" width="1254" height="1254"><figcaption>keep it simple</figcaption></figure>
-        <span class="art-sticker">简单一点<br>好看一点</span>
-      </div>
-    </section>
-    <section class="features wrap" id="features" aria-label="项目功能">
-      <article><span class="feature-icon" aria-hidden="true">✧</span><h2>给衣橱一点秩序</h2><p>按类别整理衣服、鞋子和配饰，把常穿的那几件，变成随手可搭的灵感。</p></article>
-      <article><span class="feature-icon" aria-hidden="true">☀</span><h2>好看，也合时宜</h2><p>根据季节、实际温度和天气调整厚薄与层次，让搭配更贴近日常。</p></article>
-      <article><span class="feature-icon" aria-hidden="true">↔</span><h2>自己的风格，自己搭</h2><p>上装、下装、鞋子从上到下排列，每行独立切换，找到喜欢的组合。</p></article>
-    </section>
-    <section class="demo-section" id="demo">
-      <div class="wrap demo-layout">
-        <div class="demo-copy"><p class="eyebrow">MIX A LITTLE, FEEL DIFFERENT</p><h2>左右滑一滑，<br>今天就这样穿。</h2><p>先从下面的小演示开始。每次只换一件，看看整套搭配会有什么不同。</p><span class="demo-label">项目演示 · 无需登录</span><p class="demo-disclaimer">这里使用示例单品与 AI 款式参考图，不会读取或保存你的个人档案、照片和衣橱。</p></div>
-        <div class="demo-board" aria-label="三行手动搭配演示">
-          <div class="board-head"><span>MY DAILY COMBINATION</span><button type="button" id="resetDemo">重新搭一套</button></div>
-          <div id="demoRows"></div>
-          <div class="board-footer"><span class="mini-dot"></span><p id="demoSummary" aria-live="polite">正在准备搭配演示…</p></div>
-          <noscript><p>开启浏览器 JavaScript 后即可左右切换单品。完整源码与本地运行说明仍可查看。</p></noscript>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span>OPEN THE WARDROBE · 打开衣橱</p>
+          <h1 id="heroTitle">把今天，<br>穿成<em>喜欢的样子。</em></h1>
+          <p class="lead">衣橱里的熟悉单品，也能搭出新鲜感。<br>跟着季节找灵感，或左右滑一滑，自己决定今天怎么穿。</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#demo">打开魔镜试搭<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <a class="button secondary" href="#start">运行完整 App</a>
+          </div>
+          <ul class="hero-tags" aria-label="核心功能">
+            <li>三行滑动 · 自己搭</li>
+            <li>6 档温度规则</li>
+            <li>照片本机识别</li>
+          </ul>
+          <p class="hero-note">给 20–30 岁的日常，一点轻松的穿衣灵感。</p>
+        </div>
+
+        <div class="hero-art">
+          <div class="stage" id="stage">
+            <div class="alcove" aria-hidden="true"></div>
+            <div class="floor" aria-hidden="true"></div>
+            <div class="wardrobe" id="wardrobe" data-state="closed">
+              <div class="wardrobe-crown" aria-hidden="true"><span>WEAVE · FIT</span></div>
+              <div class="wardrobe-body">
+                <div class="interior" id="wardrobeInterior">
+                  <div class="interior-light" aria-hidden="true"></div>
+                  <div class="shelf-top" aria-hidden="true">
+                    <div class="folded"><i></i><i></i><i></i></div>
+                    <div class="shelf-piece hat" id="shelfHat"></div>
+                    <div class="shelf-piece bag" id="shelfBag"></div>
+                  </div>
+                  <div class="shelf-board top-board" aria-hidden="true"></div>
+                  <div class="rail" aria-hidden="true"></div>
+                  <ul class="hangers" id="heroHangers" aria-label="衣橱里的单品，点一件放进魔镜"></ul>
+                  <ul class="shoe-rack" id="heroShoes" aria-label="鞋子，点一双放进魔镜"></ul>
+                  <div class="shelf-board floor-board" aria-hidden="true"></div>
+                  <div class="drawer-strip" aria-hidden="true"><span></span></div>
+                </div>
+                <div class="door door-left" aria-hidden="true"><div class="face front"><span class="knob"></span></div><div class="face back"></div></div>
+                <div class="door door-right" aria-hidden="true"><div class="face front"><span class="knob"></span></div><div class="face back"><span class="door-mirror"></span></div></div>
+              </div>
+              <div class="wardrobe-plinth" aria-hidden="true"><i></i><i></i></div>
+            </div>
+            <svg class="sparkle s1" aria-hidden="true"><use href="#i-spark"/></svg>
+            <svg class="sparkle s2" aria-hidden="true"><use href="#i-spark"/></svg>
+            <svg class="sparkle s3" aria-hidden="true"><use href="#i-spark"/></svg>
+            <svg class="sparkle s4" aria-hidden="true"><use href="#i-spark"/></svg>
+            <p class="stage-note" aria-hidden="true"><span>tap a piece,</span> 放进魔镜试试 ↓</p>
+          </div>
+          <button type="button" class="door-toggle" id="doorToggle" aria-controls="wardrobe" aria-expanded="false">打开衣橱</button>
         </div>
       </div>
     </section>
-    <section class="start wrap" id="start">
-      <div><p class="eyebrow">MAKE IT YOURS</p><h2>把完整衣橱，<br>放进自己的日常。</h2><p>这个页面是项目主页与静态演示。完整 App 提供个人账号、面部参考、照片上传、衣橱管理和搭配收藏，在你自己的后台中运行。</p><a class="text-link" href="https://github.com/Dear-dilraba-jmq/weave-fit#readme" target="_blank" rel="noopener noreferrer">查看完整项目与运行说明 ↗</a></div>
-      <div class="start-card"><h3>本地启动</h3><p>安装 Node.js 24 或更新版本，下载项目后，在项目文件夹打开终端：</p><pre><code>cd outfit-independent
+
+    <section class="drawers-section" id="wardrobe" aria-labelledby="wardrobeTitle">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span>INSIDE THE WARDROBE · 衣橱里有什么</p>
+          <h2 id="wardrobeTitle">一个衣橱，<br>四个小抽屉。</h2>
+          <p>把麻烦的事收进抽屉：录入、看天、搭配和保管，各管一件。</p>
+        </div>
+        <div class="drawers">
+          <article class="drawer reveal">
+            <div class="drawer-front"><span class="drawer-plate">01 · 收纳</span><span class="drawer-pull" aria-hidden="true"></span></div>
+            <div class="drawer-box">
+              <h3>给衣橱一点秩序</h3>
+              <p>按类别整理衣服、鞋子、包袋和配饰。拍照或从相册选图后，自动建议名称、类别、主色和季节，确认后再保存。</p>
+              <ul class="chips"><li>8 个类别</li><li>白底单品图</li><li>手填优先</li></ul>
+            </div>
+          </article>
+          <article class="drawer reveal">
+            <div class="drawer-front"><span class="drawer-plate">02 · 看天</span><span class="drawer-pull" aria-hidden="true"></span></div>
+            <div class="drawer-box">
+              <h3>好看，也合时宜</h3>
+              <p>实际温度优先于季节名称，按 6 档温度调整厚薄与层次；雨雪天避开帆布和麂皮鞋，低温穿裙子会提醒腿部保暖。</p>
+              <ul class="chips"><li>6 档温度</li><li>天气</li><li>场合</li></ul>
+            </div>
+          </article>
+          <article class="drawer reveal">
+            <div class="drawer-front"><span class="drawer-plate">03 · 自己搭</span><span class="drawer-pull" aria-hidden="true"></span></div>
+            <div class="drawer-box">
+              <h3>自己的风格，自己搭</h3>
+              <p>上装、下装、鞋子三行独立滑动，居中的那件就是选择；只提示不适温的单品，不擅自替换你挑好的衣服。</p>
+              <ul class="chips"><li>三行滑动</li><li>收藏</li><li>导出参考图</li></ul>
+            </div>
+          </article>
+          <article class="drawer reveal">
+            <div class="drawer-front"><span class="drawer-plate">04 · 本机优先</span><span class="drawer-pull" aria-hidden="true"></span></div>
+            <div class="drawer-box">
+              <h3>衣橱只属于你</h3>
+              <p>照片识别在本机完成，不发送至外部 AI；不同账号的数据相互隔离，服务密钥只保存在本机服务端。</p>
+              <ul class="chips"><li>本机模型</li><li>账号隔离</li><li>完整备份</li></ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mirror-section" id="demo" aria-labelledby="demoTitle">
+      <div class="wrap">
+        <div class="demo-head reveal">
+          <div>
+            <p class="eyebrow"><span class="dot" aria-hidden="true"></span>MIX A LITTLE, FEEL DIFFERENT · 魔镜试搭</p>
+            <h2 id="demoTitle">左右滑一滑，<br>今天就这样穿。</h2>
+          </div>
+          <div class="demo-intro">
+            <p>每行独立切换，居中的那件就是选择。魔镜把三件拼成一整套，并按当前温度提醒不合适的单品。</p>
+            <span class="demo-label">项目演示 · 无需登录</span>
+            <p class="demo-disclaimer">这里使用示例单品的面料质感示意（在浏览器里绘制），不会读取或保存你的个人档案、照片和衣橱。</p>
+          </div>
+        </div>
+
+        <div class="demo-stage">
+          <div class="rails reveal" aria-label="三行手动搭配演示">
+            <div class="rails-head"><span>MY DAILY COMBINATION</span><div class="rails-actions"><button type="button" id="shuffleDemo">随机一套</button><button type="button" id="resetDemo">重新搭一套</button></div></div>
+            <div id="demoRows"></div>
+            <noscript><p class="noscript">开启浏览器 JavaScript 后即可左右切换单品。完整源码与本地运行说明仍可查看。</p></noscript>
+          </div>
+
+          <div class="mirror-wrap reveal">
+            <figure class="mirror" id="mirror" aria-labelledby="mirrorCaption">
+              <div class="mirror-crest" aria-hidden="true"><svg><use href="#i-spark"/></svg></div>
+              <div class="mirror-frame">
+                <div class="mirror-glass">
+                  <div class="mirror-outfit" id="mirrorOutfit" aria-hidden="true"></div>
+                  <span class="mirror-shine" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="mirror-feet" aria-hidden="true"><i></i><i></i></div>
+              <figcaption class="visually-hidden" id="mirrorCaption">魔镜：当前选择的上装、下装和鞋子组合预览</figcaption>
+            </figure>
+          </div>
+
+          <div class="mirror-notes">
+            <p class="mirror-summary"><span class="mini-dot" aria-hidden="true"></span><span id="demoSummary" aria-live="polite">正在准备搭配演示…</span></p>
+            <p class="mirror-check" id="mirrorCheck" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="climate-section" id="climate" aria-labelledby="climateTitle">
+      <div class="wrap climate-grid">
+        <div class="climate-panel reveal">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span>DRESS FOR THE WEATHER · 看天穿衣</p>
+          <h2 id="climateTitle">温度先说话，<br>季节再调色。</h2>
+          <p>实际温度优先于季节名称。拖动温度或换个天气，看完整 App 使用的同一套本地规则，怎样从示例衣橱里挑出一套。</p>
+
+          <fieldset class="chip-group">
+            <legend>季节</legend>
+            <div class="chip-row">
+              <label><input type="radio" name="season" value="春季" checked><span>春季 · 18°</span></label>
+              <label><input type="radio" name="season" value="夏季"><span>夏季 · 30°</span></label>
+              <label><input type="radio" name="season" value="秋季"><span>秋季 · 18°</span></label>
+              <label><input type="radio" name="season" value="冬季"><span>冬季 · 5°</span></label>
+            </div>
+          </fieldset>
+
+          <div class="thermo">
+            <div class="thermo-readout"><output id="tempValue" for="tempRange">18°C</output><span id="bandLabel">温和轻装</span></div>
+            <label class="visually-hidden" for="tempRange">实际温度（°C）</label>
+            <input type="range" id="tempRange" min="-10" max="40" step="1" value="18">
+            <ol class="band-scale" id="bandScale" aria-hidden="true">
+              <li style="--w:31">≤5°</li><li style="--w:12">6–11°</li><li style="--w:12">12–17°</li><li style="--w:12">18–23°</li><li style="--w:10">24–28°</li><li style="--w:23">≥29°</li>
+            </ol>
+          </div>
+
+          <fieldset class="chip-group">
+            <legend>天气</legend>
+            <div class="chip-row">
+              <label><input type="radio" name="weather" value="晴" checked><span>晴朗</span></label>
+              <label><input type="radio" name="weather" value="多云"><span>多云</span></label>
+              <label><input type="radio" name="weather" value="大风"><span>大风</span></label>
+              <label><input type="radio" name="weather" value="小雨"><span>小雨</span></label>
+              <label><input type="radio" name="weather" value="雨雪"><span>雨雪</span></label>
+            </div>
+          </fieldset>
+          <p class="fine-print">季节按钮的示例温度不是天气预报；完整 App 里可以改成当天的实际温度。</p>
+        </div>
+
+        <div class="forecast reveal" id="forecast">
+          <div class="forecast-head">
+            <p class="forecast-kicker">规则搭配 · 示例衣橱</p>
+            <h3 id="forecastTitle">温和轻装 · 18°C</h3>
+            <p id="forecastAdvice" class="forecast-advice">正在准备规则搭配…</p>
+          </div>
+          <div class="forecast-board" id="forecastBoard"></div>
+          <ul class="forecast-tips" id="forecastTips"></ul>
+          <div class="forecast-actions">
+            <button type="button" class="button secondary small" id="variantButton">换一套</button>
+            <button type="button" class="button primary small" id="applyForecast">放进魔镜试试</button>
+          </div>
+          <p class="fine-print">与完整 App 共用 outfit-plan.js 的本地规则；结果只来自这份示例衣橱，不调用文字 AI。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow-section" id="flow" aria-labelledby="flowTitle">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span>FROM PHOTO TO OUTFIT · 使用流程</p>
+          <h2 id="flowTitle">从一张照片，<br>到一整套搭配。</h2>
+          <p>完整 App 的六个步骤。前四步只用本机能力就能完成，图像服务、文字 AI 和淘宝商品卡按需单独配置。</p>
+        </div>
+        <ol class="flow-steps" id="flowSteps">
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">01</span><h3>拍照入橱</h3><p>在「我的衣橱」点添加单品，拍照或从相册选图。本机模型排除头发、肢体和背景，裁出居中的白底单品图，原图一并保留。</p><small>SegFormer 衣物分割 · 本机推理</small></li>
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">02</span><h3>自动填写</h3><p>按照片建议名称、类别、主色和季节，颜色只从衣物区域提取。手动改过的内容不会被自动结果覆盖。</p><small>本地 CLIP · 可随时修改</small></li>
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">03</span><h3>设定场景</h3><p>选择季节、实际温度、天气和场合。温度分 6 档，不适温的单品会被筛除并说明原因。</p><small>6 档温度 · 天气 · 场合</small></li>
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">04</span><h3>生成或手搭</h3><p>让规则按温度、场合和风格挑一套，或三行左右滑动自己组合。配置文字 AI 后可获得 AI 方案，冲突时按本地规则重排。</p><small>规则引擎 · 可选文字 AI</small></li>
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">05</span><h3>补齐与预览</h3><p>衣橱里缺的单品给出款式示意和淘宝搜索入口；另行配置图像服务后，可生成本人全身穿搭参考图。</p><small>待补款式 · 可选图像服务</small></li>
+          <li class="step reveal"><span class="step-button" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="step-no">06</span><h3>收藏与备份</h3><p>收藏喜欢的整套搭配并导出参考板图片；个人档案可导出完整备份，迁移到新电脑的空账号。</p><small>搭配收藏 · JSON 备份</small></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="start-section" id="start" aria-labelledby="startTitle">
+      <div class="wrap start-grid">
+        <div class="reveal">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span>MAKE IT YOURS</p>
+          <h2 id="startTitle">把完整衣橱，<br>放进自己的日常。</h2>
+          <p>这个页面是项目主页与静态演示。完整 App 提供个人账号、面部参考、照片上传、衣橱管理和搭配收藏，在你自己的后台中运行。</p>
+          <ul class="doc-links">
+            <li><a href="https://github.com/Dear-dilraba-jmq/weave-fit#readme" target="_blank" rel="noopener noreferrer">项目说明 README ↗</a></li>
+            <li><a href="https://github.com/Dear-dilraba-jmq/weave-fit/blob/main/WORKFLOW.md" target="_blank" rel="noopener noreferrer">使用与开发流程 ↗</a></li>
+            <li><a href="https://github.com/Dear-dilraba-jmq/weave-fit/blob/main/TECHNICAL_OUTLINE.md" target="_blank" rel="noopener noreferrer">技术大纲 ↗</a></li>
+          </ul>
+        </div>
+        <div class="start-card reveal">
+          <h3>本地启动</h3>
+          <p>安装 Node.js 24 或更新版本，下载项目后，在项目文件夹打开终端：</p>
+          <div class="terminal">
+            <div class="terminal-bar"><i></i><i></i><i></i><button type="button" class="copy-button" id="copyCode" data-copy="startCode">复制</button><span class="visually-hidden" id="copyStatus" aria-live="polite"></span></div>
+            <pre><code id="startCode">cd outfit-independent
 npm install
-node launch.cjs</code></pre><p class="start-tip">启动后按提示打开 App。Windows 也可在安装依赖后，双击「启动独立版.cmd」。</p><details><summary>哪些功能还需要额外配置？</summary><p>按季节温度搭配、手动组合与衣橱保存可在本地使用。衣物分割需先下载本机模型；自动生成本人的全身穿搭图、文字 AI 与淘宝真实商品卡需要各自的外部服务配置。GitHub Pages 展示本页，不运行这些后台服务。</p></details></div>
+node launch.cjs</code></pre>
+          </div>
+          <p class="start-tip">启动后按提示打开 App。Windows 也可在安装依赖后，双击「启动独立版.cmd」。</p>
+          <details>
+            <summary>哪些功能还需要额外配置？</summary>
+            <p>按季节温度搭配、手动组合与衣橱保存可在本地使用。衣物分割和自动填写需先下载本机模型；自动生成本人的全身穿搭图、文字 AI 与淘宝真实商品卡需要各自的外部服务配置。GitHub Pages 展示本页，不运行这些后台服务。</p>
+          </details>
+        </div>
+      </div>
     </section>
   </main>
-  <footer class="footer wrap"><a class="brand" href="#">穿搭魔镜 <small>WEAVE FIT</small></a><p>穿得舒服，也穿得像自己。</p><a href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">查看源码 ↗</a></footer>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <a class="brand" href="#main"><span class="brand-mark" aria-hidden="true"><svg><use href="#i-hanger"/></svg></span><span class="brand-text">穿搭魔镜<small>WEAVE FIT</small></span></a>
+      <p>穿得舒服，也穿得像自己。</p>
+      <a class="footer-source" href="https://github.com/Dear-dilraba-jmq/weave-fit" target="_blank" rel="noopener noreferrer">查看源码 ↗</a>
+      <p class="footer-note">示例单品为程序绘制的面料质感示意（待补款式为轮廓示意），不是真实商品或本人试穿图。</p>
+    </div>
+  </footer>
 </body>
 </html>
