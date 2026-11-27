@@ -12,7 +12,6 @@
   async function render(plan,resolve){
     var photos={};
     await Promise.all((plan.items||[]).map(async function(item){if(item.image_path)photos[item.image_path]=await photoData(resolve(item.image_path));}));
-    await Promise.all((plan.gaps||[]).map(async function(item){var ref=window.OutfitReference.referenceAsset(item);if(ref)photos[ref.src]=await photoData(ref.src);}));
     var svg=window.OutfitReference.posterSvg(plan,photos);
     var url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
     try{

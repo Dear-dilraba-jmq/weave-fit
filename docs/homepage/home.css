@@ -220,6 +220,7 @@ button.app-btn.dark:hover{background:#000}
 .scan-box i:nth-child(3){left:-2px;bottom:-2px;border-width:0 0 3px 3px;border-bottom-left-radius:14px}
 .scan-box i:nth-child(4){right:-2px;bottom:-2px;border-width:0 3px 3px 0;border-bottom-right-radius:14px}
 .scan-beam{position:absolute;left:0;right:0;top:0;z-index:2;height:2px;background:linear-gradient(90deg,transparent,#fff 18%,#fff 82%,transparent);box-shadow:0 0 18px 5px rgba(255,255,255,.55);opacity:0;pointer-events:none}
+.scan-cutout{position:absolute;right:10px;bottom:10px;z-index:3;width:30%;aspect-ratio:1;border-radius:12px;background:#fff;object-fit:contain;box-shadow:0 6px 18px rgba(20,16,12,.25);opacity:0;transition:opacity .3s}
 .scan-tag{position:absolute;left:12px;top:12px;z-index:3;padding:4px 10px;border-radius:999px;background:rgba(27,25,22,.72);color:#fff;font-size:12px;font-weight:600}
 .scan-fields{display:flex;flex-wrap:wrap;gap:8px;min-height:72px;margin-top:14px}
 .scan-fields span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:13.5px}

@@ -1,6 +1,6 @@
 /* 穿搭魔镜 Service Worker
    只缓存本站静态文件；登录 / 数据库 / 存储 / 大模型等云接口一律走网络，绝不缓存。 */
-var CACHE = 'outfit-mirror-independent-v25';
+var CACHE = 'outfit-mirror-independent-v26';
 var STATIC = {
   '/': true,
   '/index.html': true,
@@ -20,10 +20,6 @@ var STATIC = {
   '/taobao-connect.html': true,
   '/taobao-connect.js': true,
   '/look-reference.js': true,
-  '/reference-cream-knit-v1.png': true,
-  '/reference-light-blue-jeans-v1.png': true,
-  '/reference-white-sneakers-v1.png': true,
-  '/reference-light-grey-bag-v1.png': true,
   '/manifest.webmanifest': true,
   '/icon.svg': true,
   '/icon-192.png': true,

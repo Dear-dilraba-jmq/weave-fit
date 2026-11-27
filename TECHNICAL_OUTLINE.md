@@ -89,12 +89,12 @@ flowchart LR
 | `cutout.js` | 读取照片（按 EXIF 方向）与压缩，调用 `/api/garment` 和 `/api/wardrobe/analyze` |
 | `outfit-plan.js` | 搭配规则引擎（第 9 节） |
 | `style-guide.js` | 风格指南「复古学院 · 甜酷日常」，整理自 17 张用户提供的搭配拼贴 |
-| `look-reference.js` | 单品颜色、轮廓示意、搭配板与海报 SVG、待补单品参考图映射 |
+| `look-reference.js` | 单品颜色、轮廓示意、搭配板与海报 SVG；待补单品一律用程序绘制的款式轮廓，不使用照片 |
 | `look.js` | 导出搭配参考图（嵌入本人照片） |
 | `shopping.js` | 补购：淘宝搜索链接与商品卡 |
 | `taobao-connect.html` · `taobao-connect.js` | 淘宝联盟应用连接页 |
 | `pwa.js` · `sw.js` · `manifest.webmanifest` | 安装与离线静态缓存 |
-| 图片 | 图标，四季风格图 `style-source-*.jpg`，4 张 AI 参考图 `reference-*-v1.png` |
+| 图片 | 图标，四季风格图 `style-source-*.jpg` |
 
 ### 4.3 项目主页（仓库根目录）
 
@@ -103,7 +103,7 @@ flowchart LR
 | `index.html` | 页面结构与文案：首屏、数字、痛点、四个功能演示、三步开始、隐私、常见问题、下载与启动、页脚署名 |
 | `homepage/home.css` | 设计变量、手机样机、功能演示、响应式与「减少动态效果」 |
 | `homepage/home.js` | 示例衣橱数据（18 张 Unsplash 照片）、首屏天气轮播、拍照入橱演示、看天穿衣、自己滑着搭、衣橱筛选、照片署名 |
-| `homepage/photos/` | 示例衣橱照片：18 张 480×480 缩略图 `item-编号.jpg` 与 5 张 960px 宽的拍照入橱用图 `scan-编号.jpg`（JPEG，共约 1.2 MB） |
+| `homepage/photos/` | 示例衣橱照片：18 张 480×480 缩略图 `item-编号.jpg`、5 张 960px 宽的拍照入橱用图 `scan-编号.jpg`，以及本机模型生成的白底单品图 `cutout-编号.jpg`（600×600，JPEG） |
 | `scripts/build-pages.cjs` | 把主页及依赖同步到 `docs/`（先清空 `docs/homepage/` 与 `docs/outfit-independent/`） |
 
 ## 5. 数据模型
@@ -247,7 +247,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 | 区块 | 实现 |
 | --- | --- |
 | 首屏「今日搭配」 | 4 组天气预设（20° 多云、14° 小雨、30° 晴、4° 大风）分别调用 `OutfitPlanner.suggest`；`variant` 相当于在 App 里点了几次「换一套」，让四组尽量展示不同单品。搭配板取 4 格：有连衣裙时为外套、连衣裙、鞋、包，否则为外套、上装、下装、鞋、包中实际选到的前 4 件。每 4.6 秒切换一组，指针停在样机上、首屏离开视口或页面隐藏时暂停，点预设按钮后停止自动轮播；开启「减少动态效果」时不自动轮播 |
-| 01 拍照入橱 | 5 张示例照片轮换。照片以 `object-fit: cover` 铺满 4:5 画面，`scanBox()` 把人工标注的衣物区域（原图宽高的百分比）换算成画面坐标；照片解码后，框线从整幅收拢到衣物处，再依次填出名称、类别、主色和季节。页面注明这是流程示意，不是模型的实时输出 |
+| 01 拍照入橱 | 示例照片轮换，数据在 `home.js` 的 `scanData`：衣物区域 `box`、名称、类别、主色、季节都来自 App 本机 SegFormer + CLIP 对 `scan-编号.jpg` 的真实输出（用 `scripts/export-scan-demo.cjs` 离线导出，页面不在浏览器里推理）。照片以 `object-fit: cover` 铺满 4:5 画面，`scanBox()` 把 `box`（原图宽高的百分比）换算成画面坐标；框线从整幅收拢到衣物处，依次填出四个字段，最后在右下角淡入真实生成的白底单品图 `cutout-编号.jpg`。「换一张」只在 `scanData` 里有数据的照片间轮换 |
 | 02 看天穿衣 | 季节（套用 `seasonDefaults` 的示例温度）、实际温度（−10…40°C）、天气、风格、场合 → `OutfitPlanner.suggest`，与 App 同一套规则；缺少的单品显示衣架占位和「建议添置」，提醒列出 `warnings`、待补建议与 `tips`。「换一套」递增 `variant`，「拿去自己调整」把方案放进下一块 |
 | 03 自己滑着搭 | 「上装 / 外套」「下装」「鞋子」三行，支持滑动、按钮、方向键与 Home / End、随机和重置；按看天穿衣当前的温度用 `unsuitable()` 检查，只提醒不替换；需要外搭时只推荐示例衣橱里此刻适温的外套 |
 | 04 数字衣橱 | 按类别筛选 18 件示例单品，点一件放进「自己滑着搭」；包袋不在三行里，点选时提示由规则搭配自动配上 |
@@ -255,7 +255,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 
 示例照片与数据：
 
-- `closet` 中每件单品有 `photo`（Unsplash 图片编号）、`page`（原图页面）、`by`（摄影师），可选 `rect`（原图像素裁切区域，避开同框的其他衣服）；`photo` 与 `rect` 记录本地照片的来源，重新下载时使用。拍照入橱用到的 5 件另有 `size`（原图宽高）和 `box`（衣物区域）。
+- `closet` 中每件单品有 `photo`（Unsplash 图片编号）、`page`（原图页面）、`by`（摄影师），可选 `rect`（原图像素裁切区域，避开同框的其他衣服）；`photo` 与 `rect` 记录本地照片的来源，重新下载时使用。拍照入橱用到的照片另有 `scanData` 条目（`box`、`size`、识别字段）。
 - 照片随主页发布在 `homepage/photos/`，`photoUrl()` 按单品编号拼出本地路径：`item-编号.jpg` 是 480×480 的正方形缩略图（按 `rect` 裁切后缩放），首屏、列表、三行滑动和衣橱共用一张；`scan-编号.jpg` 是 960px 宽的整张图，宽高比与原图一致，`box` 的百分比因此仍然适用。两种图都由 Unsplash 图床按 `photo`、`rect` 生成后下载（JPEG，质量 72）。首屏图片立即加载，其余 `loading="lazy"`；首屏其余三组和拍照入橱的其余照片会预先加载，切换时不出现空白。
 - 照片来自 Unsplash 免费图库（Unsplash License），只作演示，页面与页脚都注明不是在售商品，也不是任何用户的衣橱。
 
@@ -265,7 +265,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 
 - `sw.js` 只处理同源 GET，并且只处理 `STATIC` 白名单中的静态路径：网络优先，离线时回退缓存。
 - 登录、记录、图片、备份和生成结果等接口一律直连网络，从不缓存（`worker.test.cjs` 覆盖）。
-- 缓存名当前为 `outfit-mirror-independent-v25`；新版本激活时只删除本应用的旧缓存。
+- 缓存名当前为 `outfit-mirror-independent-v26`；新版本激活时只删除本应用的旧缓存。
 
 ## 12. 测试
 
@@ -277,7 +277,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 | `garment.test.cjs` | 浅色衣物保留、人物与背景去除；缺少衣物类别时明确失败 |
 | `item-auto-fill.test.cjs` | 上传后自动填写四个字段并尊重手动修改；识别接口校验账号与图片 |
 | `item-recognizer.test.cjs` | 用衣物像素识别；分割失败时仍有元数据与原图 |
-| `look-reference.test.cjs` | 明确颜色优先；搭配板包含全部单品 |
+| `look-reference.test.cjs` | 明确颜色优先；搭配板包含全部单品；待补单品只用轮廓示意、不出现照片 |
 | `manual-ui.test.cjs` | 三行可用按钮、键盘和触摸独立选择 |
 | `operations.test.cjs` | 启动器端口与地址；在线备份包含 WAL 中已提交的数据且不覆盖源库 |
 | `outfit-plan.test.cjs` | 度假优先连衣裙；30°C 不选普通卫衣，18°C 不选短袖上衣 |
@@ -301,6 +301,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 | `scripts/setup-garment-model.cjs` | 下载固定版本的衣物分割模型 |
 | `scripts/setup-item-recognizer.cjs` | 下载单品识别模型 |
 | `scripts/prepare-import.cjs` | `node scripts/prepare-import.cjs <导出目录> <输出.json>`：把旧网站的单用户导出（`profiles.json`、`wardrobe_items.json`、`outfits.json`、`images/`）转换为备份格式 |
+| `scripts/export-scan-demo.cjs` | `node scripts/export-scan-demo.cjs 7:外套 16:包袋`：用本机模型处理主页 `scan-编号.jpg`，输出 `scanData` 条目并写入 `cutout-编号.jpg`（需先下载两个模型） |
 | `scripts/fashn-inference.py` | 本机 FASHN VTON 推理，由 `fashn-local.cjs` 调用 |
 | `scripts/preview-test.cjs` | 启动隔离的浏览器检查实例，不打开或复制用户数据库 |
 | `scripts/public-host.cjs` · `public-bridge.cjs` · `stop-public.cjs` | 公网测试入口（默认停用） |
@@ -337,13 +338,13 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 - 没有邮箱验证与找回，忘记密码只能在本机终端重设。
 - 识别为零样本分类，季节只按可见款式估计；复杂背景或多件叠放时分割可能不准确。
 - 规则引擎为启发式，搭配结果取决于衣橱里实际有哪些单品。
-- 项目主页拍照入橱演示的衣物框为人工标注，不是模型输出。
+- 项目主页拍照入橱演示是离线导出的模型结果，页面里不现场推理；个别结果会不准（例如纱质半身裙的抠图边缘有缺口、名称被识别成「棕黑配色」），演示保留原样，不做修饰。
 - 仓库暂无许可证文件。
 
 ## 17. 路线图
 
 逐项待办、优先级与完成标准见 [WORK.md 第 5 节](WORK.md#5-待办)。
 
-- **近期**：拍照入橱演示改用本机模型的真实输出；App 待补单品的 AI 参考图换成真实照片或占位；App 界面沿用主页的视觉语言；规则引擎细分通勤、约会、运动等场合，补充雨雪天鞋履约束。
+- **近期**：App 界面沿用主页的视觉语言；规则引擎细分通勤、约会、运动等场合，补充雨雪天鞋履约束。
 - **中期**：穿着记录与统计（穿着日历、穿着次数）；分片备份与导入，突破 64MB；持续集成；补充许可证与贡献指南。
 - **长期**：服务器版部署方案（HTTPS、持久存储、多实例共享限流）；更多本机模型（如材质识别），持续保持「照片不出本机」。

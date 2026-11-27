@@ -169,11 +169,12 @@
                 <img class="scan-photo" id="scanPhoto" alt="" decoding="async">
                 <span class="scan-box" id="scanBox" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                 <span class="scan-beam" id="scanBeam" aria-hidden="true"></span>
+                <img class="scan-cutout" id="scanCutout" alt="" decoding="async">
                 <span class="scan-tag" id="scanTag">本机识别</span>
               </div>
               <div class="scan-fields" id="scanFields" aria-live="polite"></div>
               <div class="scan-foot">
-                <p>流程示意：先找出照片里衣物所在的区域，再填写名称、类别、主色和季节。示例照片来自 Unsplash。</p>
+                <p>本机 SegFormer 分割、CLIP 识别的真实结果：先框出衣物区域，再填好名称、类别、主色和季节，生成白底单品图。示例照片来自 Unsplash。</p>
                 <button type="button" class="button ghost small" id="scanNext"><svg aria-hidden="true"><use href="#i-camera"/></svg>换一张</button>
               </div>
             </div>

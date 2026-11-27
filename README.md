@@ -4,7 +4,7 @@
 
 > **English summary** — Weave Fit is a local-first digital wardrobe. Photograph your clothes, let on-device models fill in name, category, colour and season, then build outfits by temperature-aware rules or by swiping three rows (tops, bottoms, shoes) yourself. Everything runs on your own computer with Node.js 24 and SQLite; text AI, try-on images and Taobao product cards are optional add-ons you configure locally.
 
-仓库根目录的 [index.html](index.html) 是可直接展示的项目主页，版式参考市面上的数字衣橱产品官网（Whering、Acloset、Indyx、Cladwell，调研见 [WORK.md](WORK.md)）：首屏手机样机按几组天气轮播「今日搭配」，往下依次是拍照入橱的流程示意、看天穿衣（在浏览器里运行与 App 相同的温度规则）、三行滑动自己搭和可筛选的示例衣橱，手机上同样可用，不需要登录。示例衣橱的 18 件单品是 Unsplash 上的真实服装照片（Unsplash License），页脚逐张注明摄影师和原图链接；这些照片只用于演示，不是在售商品，也不是任何用户的衣橱。
+仓库根目录的 [index.html](index.html) 是可直接展示的项目主页，版式参考市面上的数字衣橱产品官网（Whering、Acloset、Indyx、Cladwell，调研见 [WORK.md](WORK.md)）：首屏手机样机按几组天气轮播「今日搭配」，往下依次是拍照入橱（展示本机模型对示例照片的真实识别结果）、看天穿衣（在浏览器里运行与 App 相同的温度规则）、三行滑动自己搭和可筛选的示例衣橱，手机上同样可用，不需要登录。示例衣橱的 18 件单品是 Unsplash 上的真实服装照片（Unsplash License），页脚逐张注明摄影师和原图链接；这些照片只用于演示，不是在售商品，也不是任何用户的衣橱。
 
 ## 功能一览
 
@@ -103,7 +103,6 @@ GitHub Pages 是静态托管：可以展示本主页与搭配演示，不能运�
 完整待办与优先级见 [WORK.md 第 5 节](WORK.md#5-待办)，近期重点：
 
 - 白色板鞋示例照片带有品牌标识，换成无标识的照片
-- 拍照入橱演示改用 App 本机模型的真实输出；App 中待补单品的 4 张 AI 参考图换成真实照片或衣架占位
 - 完整 App 界面沿用主页的视觉语言，统一两端风格
 - 规则引擎补充更细的场合（通勤、约会、运动）与雨雪天鞋履约束
 - 公网部署：HTTPS 反向代理、`APP_HOSTS` 白名单与 `COOKIE_SECURE=1` 的验收方案

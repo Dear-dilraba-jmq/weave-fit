@@ -185,7 +185,7 @@ npm start                                # 或 node launch.cjs（显示局域网
    - 优先选单件完整入镜、背景干净、光线自然的照片，整体保持中性色调，和现有单品放在一起要协调。
    - 在 `closet` 中填写 `photo`（地址里 `photo-` 后面的编号）、`page`（原图页面地址 `unsplash.com/photos/` 后面的部分）和 `by`（摄影师）；同框有其他衣服时用 `rect`（原图像素 x,y,宽,高）裁掉。名称、类别、颜色、季节按照片如实填写，季节取值与 App 单品表单一致。
    - 把照片下载到 `homepage/photos/`，文件名用两位单品编号。缩略图 `item-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=480&h=480&fit=crop&fm=jpg&q=72`，有 `rect` 时在 `?` 后加 `rect=<rect>&`；拍照入橱用图 `scan-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=960&fm=jpg&q=72`，不裁切，保持原图宽高比。例如 `curl -fsSL -o homepage/photos/item-19.jpg "<地址>"`（Windows PowerShell 中写 `curl.exe`）。
-   - 用于拍照入橱演示的单品（`scanIds`）还要填 `size`（原图宽高）和 `box`（衣物区域，占原图宽高的百分比），改完逐张确认框线贴住衣物。
+   - 拍照入橱演示的数据不手写：照片放进 `homepage/photos/scan-编号.jpg` 后，在 `outfit-independent/` 中运行 `node scripts/export-scan-demo.cjs <编号>:<类别>`（需先下载两个本机模型），它会写出 `cutout-编号.jpg` 并打印一行 `scanData` 条目，粘贴到 `home.js` 的 `scanData` 即可。模型没有生成白底单品图的照片（如分割失败）不能用于演示。改完逐张确认框线贴住衣物，输出的名称与颜色不要手工润色。
    - 页脚署名由 `closet` 自动生成，不需要另外维护。
 
 ### 3.6 发布 GitHub Pages
@@ -205,7 +205,7 @@ git push
 ### 3.7 版本号与缓存
 
 - App 版本记录在 `outfit-independent/package.json`，`GET /api/status` 返回的版本写在 `server.cjs`，发版时两处保持一致。
-- `sw.js` 对静态文件采用网络优先、离线回退缓存。修改 `STATIC` 列表或希望清理旧缓存时，更新 `CACHE` 名称（当前为 `outfit-mirror-independent-v25`）；新版本激活时会删除旧缓存。
+- `sw.js` 对静态文件采用网络优先、离线回退缓存。修改 `STATIC` 列表或希望清理旧缓存时，更新 `CACHE` 名称（当前为 `outfit-mirror-independent-v26`）；新版本激活时会删除旧缓存。
 
 ### 3.8 提交前检查清单
 

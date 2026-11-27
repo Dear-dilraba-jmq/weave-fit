@@ -40,6 +40,28 @@
 
 ## 4. 迭代记录
 
+### 2026-11-27 · 拍照入橱改用真实模型输出；App 待补单品不再用 AI 图；白色板鞋换图调研
+
+**改动**
+
+- 下载了两个本机模型（`node scripts/setup-garment-model.cjs`、`node scripts/setup-item-recognizer.cjs`），新增 `outfit-independent/scripts/export-scan-demo.cjs`：用 App 本机的 SegFormer 分割 + CLIP 识别离线处理 `homepage/photos/scan-编号.jpg`，输出衣物区域、名称、类别、主色、季节和白底单品图 `cutout-编号.jpg`，主页不在浏览器里现场推理。
+- `homepage/home.js` 的拍照入橱演示改为读取真实输出的 `scanData`（而不是人工标注的 `box`）：框线收拢位置、四个字段和新增的白底单品图淡入都来自模型；右下角新增 `scanCutout`（`home.css` 新增 `.scan-cutout` 样式，`index.html` 新增对应 `<img>`）。白色板鞋照片分割失败（模型没能分出完整轮廓），这张暂不能进入演示，`scanIds` 只保留另外 4 张能用的照片，详见待办。
+- `outfit-independent/public/look-reference.js`：移除 `referenceAsset`（按名称和颜色匹配 4 张 AI 生成参考图的逻辑），待补单品一律用已有的程序绘制轮廓 `illustration()`；连带清理 `look.js`、`tryon.cjs`（本机 FASHN 试穿不再读取参考图文件）、`sw.js`（STATIC 列表移除 4 个 PNG 路径，缓存名升到 `v26`）里的调用。删除 `outfit-independent/public/reference-*-v1.png` 四个文件。
+- 更新 `test/look-reference.test.cjs`、`test/ui-check.cjs` 以不再断言 AI 参考图；`npm test`（64 项）与 `npm run test:all`（含 jsdom 界面与账号切换检查）全部通过。
+- README、WORKFLOW、TECHNICAL_OUTLINE 同步：拍照入橱一节改为描述真实模型输出；待补单品一节改为只用轮廓示意；新增 `export-scan-demo.cjs` 的用法说明；近期路线图移除已完成的两项。
+- 调研白色板鞋替换图：在 Unsplash 上查看约 55 张候选照片，没有找到同时满足「无品牌标识」「完整产品图构图」「免费 Unsplash License」三个条件的候选——干净背景、完整构图的白色板鞋几乎都带 Nike / Converse / Adidas / Puma 等明显标识，不带标识的候选都是上脚实拍、脏污、裁切不全或背景非白色。候选图下载在 `C:\Users\kakssjs\AppData\Local\Temp\shoe_candidates\`，两张较接近的备选（各有缺陷，未采用）：`SQHcsZplFHI`（上脚沾泥，鞋型接近 Air Force 1）、`KPydzVyWfqg`（红色地毯背景，只露出鞋头）。本轮未替换照片，待办见第 5 节。
+
+**验证**
+
+- `npm test`：64 项全部通过；`npm run test:all`：64 项单测 + 11 项 jsdom 界面/账号切换检查全部通过。
+- `node scripts/build-pages.cjs`：33 个文件，`docs/homepage/photos/` 含新增的 4 张 `cutout-*.jpg`。
+- 人工核对 4 张真实输出：风衣、西装外套、托特包的名称与颜色基本准确；纱质半身裙的抠图边缘有缺口（分割在裙摆处漏了一块），名称被识别成「棕黑配色长款半身裙」而不是「焦糖色」——按本轮要求保留真实结果，不做修饰，已记入 TECHNICAL_OUTLINE 已知限制。
+
+**遗留问题**
+
+- 白色板鞋照片仍带品牌标识，且该照片本机模型无法分割（不能用于拍照入橱演示），需要先找到合规替换图才能同时解决两个问题，见待办。
+- 「减少动态效果」仍只做了代码检查，没有在浏览器里实测（上一轮遗留，本轮未处理）。
+
 ### 2026-11-27 · 主页按产品官网重做
 
 **改动**
@@ -73,9 +95,7 @@
 
 | 优先级 | 事项 | 完成标准 |
 | --- | --- | --- |
-| 高 | 替换白色板鞋照片 | 选一张无品牌标识、构图相近的白色板鞋照片（下载前先确认），替换 `item-13.jpg` 与 `scan-13.jpg`，并更新 `photo`、`page`、`by`、`size`、`box` |
-| 高 | 拍照入橱演示改用真实输出 | 用 App 本机的 SegFormer + CLIP 处理这 5 张照片，展示真实的白底单品图与识别字段，取代人工标注的框线 |
-| 高 | App 待补单品的参考图 | `outfit-independent/public/reference-*-v1.png` 是 4 张 AI 生成图；换成真实照片，或像主页一样用衣架占位，并同步 `look-reference.js`、`sw.js` 与相关测试 |
+| 高 | 替换白色板鞋照片 | 在 Unsplash 以外找一张无品牌标识、构图相近、本机模型能分割出完整轮廓的白色板鞋照片（下载前先确认），替换 `item-13.jpg` 与 `scan-13.jpg`，更新 `photo`、`page`、`by`，并用 `node scripts/export-scan-demo.cjs 13:鞋履` 生成 `scanData` 和 `cutout-13.jpg`，补回 `scanIds` |
 | 中 | App 界面统一到主页的视觉语言 | App 与主页使用同一套颜色、字体、圆角和卡片样式 |
 | 中 | 雨雪天鞋履规则 | 雨雪天优先选靴子，没有合适的鞋时提示防水防滑；在 `outfit-plan.test.cjs` 补测试 |
 | 中 | 穿着记录与统计 | 在 App 里记录「今天穿了这套」，提供穿着日历与穿着次数，参考 Indyx、Acloset |

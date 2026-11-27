@@ -25,16 +25,16 @@
     {id:4,name:'奶白高领厚针织毛衣',category:'上装',color:'奶白',hex:'#eee8de',season:'秋冬',photo:'1687275161342-8699c61e4364',page:'a-white-sweater-hanging-on-a-clothes-rack-m2chM9O-ZHs',by:'Ihor Rapita'},
     {id:5,name:'香芋紫圆领毛衣',category:'上装',color:'香芋紫',hex:'#b39ac8',season:'春秋',photo:'1687275164205-732738f0c7bc',page:'a-purple-sweater-hanging-on-a-rack-next-to-a-vase-with-dried-flowers-HDsXgLf4w5Q',by:'Ihor Rapita'},
     {id:6,name:'焦糖棕马海毛针织衫',category:'上装',color:'焦糖棕',hex:'#7b4a33',season:'秋冬',photo:'1773747310662-e7cc9e681226',page:'a-brown-knitted-sweater-hangs-on-a-white-hanger-g3AwbdZut70',by:'Yuliia Pakhomova'},
-    {id:7,name:'米白长款风衣',category:'外套',color:'米白',hex:'#e3dbcc',season:'春秋',photo:'1722859031306-4c81e8d83957',rect:'0,350,2900,2900',size:[4000,6000],box:[9,11,61,89],page:'a-coat-rack-with-coats-hanging-on-it-_Ssh8Z8ENQM',by:'Lisa Anna'},
-    {id:8,name:'灰色人字纹厚羊毛大衣',category:'外套',color:'灰色',hex:'#8c8a87',season:'冬季',photo:'1722858958066-97deb3471c89',size:[4000,6000],box:[33,6,60,77],page:'a-coat-hanging-on-a-coat-rack-in-a-closet-pvCjWi5bATg',by:'Lisa Anna'},
+    {id:7,name:'米白长款风衣',category:'外套',color:'米白',hex:'#e3dbcc',season:'春秋',photo:'1722859031306-4c81e8d83957',rect:'0,350,2900,2900',size:[4000,6000],page:'a-coat-rack-with-coats-hanging-on-it-_Ssh8Z8ENQM',by:'Lisa Anna'},
+    {id:8,name:'灰色人字纹厚羊毛大衣',category:'外套',color:'灰色',hex:'#8c8a87',season:'冬季',photo:'1722858958066-97deb3471c89',size:[4000,6000],page:'a-coat-hanging-on-a-coat-rack-in-a-closet-pvCjWi5bATg',by:'Lisa Anna'},
     {id:9,name:'浅蓝水洗牛仔夹克',category:'外套',color:'浅蓝',hex:'#9cb2c8',season:'春秋',photo:'1543076447-215ad9ba6923',page:'blue-washed-jacket-hanging-on-white-door-_BDBEP0ePQc',by:'kemal alkan'},
     {id:10,name:'深蓝直筒牛仔裤',category:'下装',color:'深蓝',hex:'#2f3f55',season:'四季',photo:'1754555009601-498e9873197e',page:'jeans-hang-on-a-wooden-hanger-nC4-PXzKZcI',by:'Pesce Huang'},
     {id:11,name:'浅蓝卷边牛仔裤',category:'下装',color:'浅蓝',hex:'#5d7ea6',season:'四季',photo:'1714143136372-ddaf8b606da7',page:'a-pair-of-blue-jeans-on-a-white-background-9yoXrG6Er_g',by:'TuanAnh Blue'},
-    {id:12,name:'焦糖色纱质中长裙',category:'下装',color:'焦糖色',hex:'#8a5a3b',season:'春秋',photo:'1527332042004-0b1a4d8646a3',size:[4016,6016],box:[44,36,47,44],page:'brown-skirt-hanged-on-wall-1PKjyPsH8sw',by:'Gaelle Marcel'},
-    {id:13,name:'白色简约板鞋',category:'鞋履',color:'白色',hex:'#f1f1ef',season:'四季',photo:'1725271741216-743c37073437',size:[3536,5657],box:[1,45,98,25],page:'a-white-sneaker-with-a-black-and-white-star-on-the-side-wHUlMvFHEbA',by:'SJ'},
+    {id:12,name:'焦糖色纱质中长裙',category:'下装',color:'焦糖色',hex:'#8a5a3b',season:'春秋',photo:'1527332042004-0b1a4d8646a3',size:[4016,6016],page:'brown-skirt-hanged-on-wall-1PKjyPsH8sw',by:'Gaelle Marcel'},
+    {id:13,name:'白色简约板鞋',category:'鞋履',color:'白色',hex:'#f1f1ef',season:'四季',photo:'1725271741216-743c37073437',page:'a-white-sneaker-with-a-black-and-white-star-on-the-side-wHUlMvFHEbA',by:'SJ'},
     {id:14,name:'棕色麂皮乐福鞋',category:'鞋履',color:'棕色',hex:'#9a6a3f',season:'春秋',photo:'1676121270762-47c8d3a7b9d5',page:'a-pair-of-brown-suede-loafers-with-gold-hardwares-KOavcW0p7oc',by:'Nelibar Shoes'},
     {id:15,name:'棕色切尔西短靴',category:'鞋履',color:'棕色',hex:'#a5622e',season:'秋冬',photo:'1773425975272-35f0900a9d8f',page:'a-tan-leather-chelsea-boot-against-a-white-background-F9O-R3RF5Xs',by:'roberto saborizado'},
-    {id:16,name:'焦糖色皮质托特包',category:'包袋',color:'焦糖色',hex:'#9b5a2a',season:'四季',photo:'1624687943971-e86af76d57de',size:[4000,6000],box:[18,15,63,68],page:'brown-leather-handbag-on-white-table-XwjrPFW7xw0',by:'Ugluk Potroshitel'},
+    {id:16,name:'焦糖色皮质托特包',category:'包袋',color:'焦糖色',hex:'#9b5a2a',season:'四季',photo:'1624687943971-e86af76d57de',size:[4000,6000],page:'brown-leather-handbag-on-white-table-XwjrPFW7xw0',by:'Ugluk Potroshitel'},
     {id:17,name:'米白帆布托特包',category:'包袋',color:'米白',hex:'#e7e3d9',season:'四季',photo:'1574365569389-a10d488ca3fb',page:'white-reusable-bag-on-gray-surface-smTDI-z1rlY',by:'Brando Makes Branding'},
     {id:18,name:'灰色皮质剑桥包',category:'包袋',color:'浅灰',hex:'#8d8991',season:'四季',photo:'1605733513597-a8f8341084e6',page:'grey-leather-satchel-with-gold-buckles-J4DnKxz_3sA',by:'mostafa mahmoudi'}
   ];
@@ -135,23 +135,33 @@
   if($('heroScanThumb'))$('heroScanThumb').innerHTML=visual(byId[4],true);
   if($('heroScanText'))$('heroScanText').textContent=[byId[4].name,byId[4].category,byId[4].season].join(' · ');
 
-  /* ---------- 01 拍照入橱：演示识别流程——先框出照片里衣物所在的区域，再依次填好名称、类别、主色和季节 ---------- */
-  var scanIds=[7,16,12,8,13],scanIndex=0,scanStage=$('scanStage'),scanToken=0;
+  /* ---------- 01 拍照入橱：本机 SegFormer 衣物分割 + CLIP 识别的真实输出（离线跑完 5 张示例照片后导出，不在浏览器里现场推理）。
+     scanBox 用的区域来自分割结果的真实外框；name/category/color/season 来自 item-recognizer.cjs 的真实识别结果，
+     不是人工标注。白底单品图 cutout-编号.jpg 是同一次运行生成的真实抠图。重新生成见 WORKFLOW.md 3.5。 */
+  var scanData={
+    7:{box:[8.9,11.9,60.3,88.1],size:[933,1400],name:'卡其色风衣外套',category:'外套',color:'卡其色',hex:'#b0a395',season:'春秋'},
+    16:{box:[18.1,16.4,63,66.4],size:[933,1400],name:'棕色单肩包',category:'包袋',color:'棕色',hex:'#8e4a23',season:'四季'},
+    12:{box:[44.5,37.4,46.4,43.4],size:[935,1400],name:'棕黑配色长款半身裙',category:'下装',color:'棕色 / 黑色',hex:'#46331f',season:'春秋'},
+    8:{box:[34.9,17.7,57,80],size:[933,1400],name:'灰黑配色西装外套',category:'外套',color:'灰色 / 黑色',hex:'#5e5e58',season:'春秋'}
+  };
+  var scanIds=Object.keys(scanData).map(Number),scanIndex=0,scanStage=$('scanStage'),scanToken=0;
+  function cutoutUrl(id){return 'homepage/photos/cutout-'+(id<10?'0':'')+id+'.jpg';}
   /* 照片以 cover 方式铺满 4:5 画面，把原图上的百分比区域换算成画面坐标 */
-  function scanBox(item){
-    var a=item.size[0]/item.size[1],s=.8,b=item.box,dw=100,dh=100,ox=0,oy=0;
+  function scanBox(data){
+    var a=data.size[0]/data.size[1],s=.8,b=data.box,dw=100,dh=100,ox=0,oy=0;
     if(a>s){dw=a/s*100;ox=(dw-100)/2;}else{dh=s/a*100;oy=(dh-100)/2;}
     function clamp(v){return Math.max(0,Math.min(100,v));}
     var l=clamp(b[0]*dw/100-ox),t=clamp(b[1]*dh/100-oy),r=clamp((b[0]+b[2])*dw/100-ox),btm=clamp((b[1]+b[3])*dh/100-oy);
     return {left:l+'%',top:t+'%',width:(r-l)+'%',height:(btm-t)+'%'};
   }
   function renderScan(){
-    var item=byId[scanIds[scanIndex]],photo=$('scanPhoto'),box=$('scanBox'),list=$('scanFields'),tag=$('scanTag'),token=++scanToken;
-    if(!item||!photo)return;
-    var target=scanBox(item);
+    var id=scanIds[scanIndex],item=byId[id],data=scanData[id],photo=$('scanPhoto'),cutout=$('scanCutout'),box=$('scanBox'),list=$('scanFields'),tag=$('scanTag'),token=++scanToken;
+    if(!item||!data||!photo)return;
+    var target=scanBox(data);
     tag.textContent='识别中…';
     list.innerHTML='';
     box.style.opacity='0';
+    cutout.style.opacity='0';
     photo.alt='示例照片：'+item.name;
     photo.src=photoUrl(item,true);
     function reveal(){
@@ -161,18 +171,24 @@
       animate(photo,[{opacity:.35},{opacity:1}],{duration:380,easing:ease});
       animate($('scanBeam'),[{top:'0%',opacity:1},{top:'100%',opacity:0}],{duration:900,easing:'ease-in-out'});
       animate(box,[{left:'0%',top:'0%',width:'100%',height:'100%',opacity:0},{left:target.left,top:target.top,width:target.width,height:target.height,opacity:1}],{duration:760,delay:160,easing:ease,fill:'backwards'});
-      var fields=[['名称',esc(item.name)],['类别',esc(item.category)],['主色','<i style="background:'+item.hex+'"></i>'+esc(item.color)],['季节',esc(item.season)]];
+      var fields=[['名称',esc(data.name)],['类别',esc(data.category)],['主色','<i style="background:'+data.hex+'"></i>'+esc(data.color)],['季节',esc(data.season)]];
       list.innerHTML=fields.map(function(f){return '<span><small>'+f[0]+'</small>'+f[1]+'</span>';}).join('');
       Array.from(list.children).forEach(function(el,i){animate(el,[{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:360,delay:700+i*120,easing:ease,fill:'backwards'});});
-      setTimeout(function(){if(token===scanToken)tag.textContent='已填写 · 可以再改';},reduced()?0:1100);
+      setTimeout(function(){
+        if(token!==scanToken)return;
+        tag.textContent='已填写 · 可以再改';
+        cutout.src=cutoutUrl(id);cutout.alt=data.name+'的白底单品图';
+        cutout.style.opacity='1';
+        animate(cutout,[{opacity:0},{opacity:1}],{duration:420,easing:ease});
+      },reduced()?0:1100);
     }
     if(photo.decode)photo.decode().then(reveal,reveal);else if(photo.complete)reveal();else photo.onload=photo.onerror=reveal;
   }
   if(scanStage){
     renderScan();
     $('scanNext').addEventListener('click',function(){scanIndex=(scanIndex+1)%scanIds.length;renderScan();});
-    /* 预先取好其余几张示例照片 */
-    scanIds.slice(1).forEach(function(id){new Image().src=photoUrl(byId[id],true);});
+    /* 预先取好其余几张示例照片与白底单品图 */
+    scanIds.slice(1).forEach(function(id){new Image().src=photoUrl(byId[id],true);new Image().src=cutoutUrl(id);});
   }
 
   /* ---------- 02 看天穿衣：完整 App 的 outfit-plan.js 规则在浏览器内运行 ---------- */

@@ -77,9 +77,8 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep(30);}
     $('#generateBtn').click();await until(()=>!$('#resultArea').hidden);
     assert.match($('#genStatus').textContent,/内置规则/);
     await until(()=>$('#resultArea .shopping-message')?.textContent.includes('尚未配置'));
-    const references=Array.from(w.document.querySelectorAll('#resultArea .gap-reference img'));
-    assert.equal(references.length,w.document.querySelectorAll('#resultArea .gap').length,'Every missing basic item has a photographic AI style reference even without Taobao credentials');
-    for(const reference of references){assert.match(reference.getAttribute('src'),/^reference-.*-v1\.png$/);assert.equal((await w.fetch(reference.getAttribute('src'))).status,200);}
+    const references=Array.from(w.document.querySelectorAll('#resultArea .gap-reference svg'));
+    assert.equal(references.length,w.document.querySelectorAll('#resultArea .gap').length,'Every missing basic item has a drawn style outline even without Taobao credentials');
     assert.ok($('#resultArea .gap-reference figcaption').textContent.includes('非真实商品'));
     assert.match($('#resultArea a[href*="s.taobao.com/search"]').textContent,/搜索/);
     $('[data-action="save"]').click();$('[data-action="save"]').click();await until(()=>$('#navSavedCount').textContent==='1');
