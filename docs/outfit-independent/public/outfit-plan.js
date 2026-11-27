@@ -55,7 +55,9 @@ function unsuitable(i,c){
  if(c.band===0&&g==='outer'&&/轻薄|防晒|薄款|牛仔/.test(s)&&!/羽绒|棉服|厚|保暖/.test(s))return '寒冷天气需要保暖外层';
  if(c.band<=1&&/短裙|迷你裙|短裤|超短|吊带裙|露肩/.test(s))return '低温优先保暖长裤或长裙';
  if(c.band<=2&&g==='shoes'&&/凉鞋|拖鞋|露趾/.test(s))return '低温需要包脚鞋';
- if(c.rain&&g==='shoes'&&/麂皮|绒面|帆布|毛绒/.test(s))return '雨雪天优先易打理、防滑的包脚鞋';return '';
+ if(c.rain&&g==='shoes'&&/麂皮|绒面|帆布|毛绒/.test(s))return '雨雪天优先易打理、防滑的包脚鞋';
+ if(c.rain&&g==='shoes'&&/凉鞋|拖鞋|露趾|洞洞鞋/.test(s))return '雨雪天不适合露脚趾或漏水的鞋';
+ return '';
 }
 function template(c,o){
  var preppy=/参考图|学院|复古|甜酷/.test(o.style||'参考图风格'),sport=/街头|运动/.test(o.style||''),v=Math.abs(Number(o.variant)||0)%2,formal=/面试|晚宴/.test(o.occasion||'');
@@ -68,7 +70,7 @@ function template(c,o){
  }
  if(sport){top=c.band<=1?'灰色加绒卫衣':c.band<=3?'灰色轻薄长袖运动上衣':'白色宽松棉质短袖';bottom=c.band<=1?'深灰加绒直筒运动裤':c.band<=3?'深灰直筒休闲裤':'浅灰轻薄运动长裤';}
  var outer=c.band===0?'奶白短款保暖羽绒服':c.band===1?'藏蓝保暖短棉服':preppy?'藏蓝短款夹克':'米色轻薄夹克';if(c.rain&&c.band>=2)outer='轻薄防风防水外套';
- var shoes=c.band<=1?'黑色保暖防滑短靴':preppy?'黑色平底乐福鞋':'白色简约运动鞋';if(c.band===5&&!preppy)shoes='白色透气运动鞋';if(c.rain)shoes=c.band<=1?'黑色防滑保暖短靴':'黑色防滑包脚休闲鞋';
+ var shoes=c.band<=1?'黑色保暖防滑短靴':preppy?'黑色平底乐福鞋':'白色简约运动鞋';if(c.band===5&&!preppy)shoes='白色透气运动鞋';if(c.rain)shoes=c.band<=3?'黑色防水防滑短靴':'黑色防水防滑包脚休闲鞋';
  var dress='',bag=preppy?'黑色小号肩包':'浅灰休闲腋下包';
  if(o.style==='度假'){
   bag=c.rain?'米色防泼水斜挎包':'天然色草编肩包';
@@ -101,7 +103,7 @@ function template(c,o){
   if(c.band>=2&&!c.rain)shoes='黑色低跟玛丽珍鞋';
  }
  if(o.occasion==='旅行'){
-  shoes=c.rain?'黑色防滑包脚步行鞋':c.band<=1?'棕色保暖防滑短靴':'奶白轻便步行鞋';
+  shoes=c.rain?'黑色防水防滑步行鞋':c.band<=1?'棕色保暖防滑短靴':'奶白轻便步行鞋';
   bag='浅棕轻便斜挎包';
   if(!dress&&c.band>=2&&/极简|通勤|^$/.test(o.style||''))bag='酒红轻便斜挎包';
  }
@@ -110,7 +112,7 @@ function template(c,o){
   top=c.band<=1?'奶白保暖针织上衣':c.band>=4?'白色轻薄翻领短袖衬衫':'白色长袖挺括衬衫';
   bottom=c.band<=1?'藏蓝加厚西装长裤':'藏蓝西装直筒长裤';
   if(c.band>=2&&!c.rain)outer='藏蓝修身西装外套';
-  shoes=c.band<=1?'黑色保暖防滑短靴':c.rain?'黑色防滑包脚乐福鞋':'黑色包脚乐福鞋';
+  shoes=c.band<=1?'黑色保暖防滑短靴':c.rain?'黑色防水防滑乐福鞋':'黑色包脚乐福鞋';
   bag='黑色简洁托特包';
  }
  return {preppy:preppy,top:top,bottom:bottom,dress:dress,outer:outer,shoes:shoes,bag:bag};
@@ -121,7 +123,7 @@ function suggest(wardrobe,picked,o){
  function mismatch(i){return unsuitable(i,c)||occasionMismatch(i,o.occasion);}
  function add(i,why){if(!i||seen.has(String(i.id)))return;seen.add(String(i.id));used.add(group(i));chosen.push({id:i.id,why:why});}
  (Array.isArray(picked)?picked:[]).forEach(function(i){if(!i)return;var owned=wardrobe.find(function(w){return String(w.id)===String(i.id);});if(!owned)return;var reason=mismatch(owned),g=group(owned);if(reason)warnings.push('你预选的「'+owned.name+'」：'+reason+'，本套已换成合适款式。');else if((g==='dress'&&(used.has('top')||used.has('bottom')))||((g==='top'||g==='bottom')&&used.has('dress'))||(g==='bottom'&&used.has('bottom')))warnings.push('你预选的「'+owned.name+'」与已选主体重复，本套保留先选的主体单品。');else add(owned,'你指定的单品，并已检查当前温度适配');});
- function score(i){var s=text(i),n=i.image_path?2:0;if(o.occasion==='约会'&&/缎面|裹身|收腰|垂感|玛丽珍|低跟/.test(s))n+=15;if(o.occasion==='旅行'&&/轻便|步行|斜挎|碎花|印花|条纹/.test(s))n+=12;if(styleMatch(i,style))n+=10;if((Array.isArray(i.tags)?i.tags:[]).some(function(tag){return String(tag).includes(style);}))n+=5;if(c.season&&String(i.season||'').includes(c.season.slice(0,1)))n+=1;if(t.preppy)guide.keywords.forEach(function(k){if(s.includes(k))n+=2;});if(c.band<=1&&/厚|保暖|加绒|针织|羽绒/.test(s))n+=5;if(c.band>=4&&/轻薄|薄款|短袖|棉麻|透气/.test(s))n+=5;return n;}
+ function score(i){var s=text(i),n=i.image_path?2:0;if(o.occasion==='约会'&&/缎面|裹身|收腰|垂感|玛丽珍|低跟/.test(s))n+=15;if(o.occasion==='旅行'&&/轻便|步行|斜挎|碎花|印花|条纹/.test(s))n+=12;if(styleMatch(i,style))n+=10;if((Array.isArray(i.tags)?i.tags:[]).some(function(tag){return String(tag).includes(style);}))n+=5;if(c.season&&String(i.season||'').includes(c.season.slice(0,1)))n+=1;if(t.preppy)guide.keywords.forEach(function(k){if(s.includes(k))n+=2;});if(c.band<=1&&/厚|保暖|加绒|针织|羽绒/.test(s))n+=5;if(c.band>=4&&/轻薄|薄款|短袖|棉麻|透气/.test(s))n+=5;if(c.rain&&group(i)==='shoes'&&/靴|防水|防滑/.test(s))n+=8;return n;}
  function candidates(g){return wardrobe.filter(function(i){return group(i)===g&&!seen.has(String(i.id))&&!mismatch(i);});}
  function choose(g,filter){if(used.has(g))return;var list=candidates(g).filter(filter||function(){return true;});list.sort(function(a,b){return score(b)-score(a)||Number(a.id)-Number(b.id);});if(list.length){var pool=list.filter(function(i){return score(i)>=score(list[0])-1;});var item=pool[(Math.abs(Number(o.variant)||0))%pool.length];add(item,styleMatch(item,style)?'符合'+style+'风格，也适合'+c.temperature+'°C的天气':'按'+c.temperature+'°C的'+c.label+'需求，从衣橱选择');}}
  var dressGap=false;
@@ -132,7 +134,7 @@ function suggest(wardrobe,picked,o){
  if(!dressGap&&!used.has('dress')&&!used.has('top')&&!used.has('bottom')&&!(candidates('top').length&&candidates('bottom').length)&&candidates('dress').length)choose('dress');
  if(!dressGap&&!used.has('dress')){choose('top');choose('bottom');}if(c.needsOuter)choose('outer');else if(o.occasion==='面试'&&c.band===3)choose('outer',function(i){return /西装|西服/.test(text(i));});choose('shoes');choose('bag');
  var required=dressGap?[['dress','连衣裙',t.dress]]:used.has('dress')?[]:[['top','上装',t.top],['bottom','下装',t.bottom]];if(c.needsOuter||(o.occasion==='面试'&&c.band===3))required.push(['outer','外套',t.outer]);required.push(['shoes','鞋履',t.shoes],['bag','包袋',t.bag]);
- var gaps=required.filter(function(r){return !used.has(r[0]);}).map(function(r){return {category:r[1],name:r[2],role:r[0],advice:r[0]==='outer'?'外搭可按室内外冷暖穿脱。'+c.advice:r[0]==='bag'?'用小体积肩包收住配色，避免配饰过多。':c.advice,budget:r[0]==='outer'?'¥200-600':'¥80-300',keyword:style+' '+r[2]};});
+ var gaps=required.filter(function(r){return !used.has(r[0]);}).map(function(r){return {category:r[1],name:r[2],role:r[0],advice:r[0]==='outer'?'外搭可按室内外冷暖穿脱。'+c.advice:r[0]==='bag'?'用小体积肩包收住配色，避免配饰过多。':r[0]==='shoes'&&c.rain?'雨雪天优先防水、防滑、包脚的鞋款，避开帆布、麂皮和露脚趾的款式。':c.advice,budget:r[0]==='outer'?'¥200-600':'¥80-300',keyword:style+' '+r[2]};});
  function extra(role,category,name,advice){
   function matches(i){var s=text(i),g=group(i);return !unsuitable(i,c)&&((g==='top'&&role==='inner'&&/保暖.*打底|打底.*保暖/.test(s))||(g==='top'&&role==='mid'&&/针织|毛衣|加绒卫衣/.test(s)&&!/打底/.test(s))||(g==='acc'&&role==='legs'&&/保暖.*(连裤袜|打底裤)|加绒.*(连裤袜|打底裤)/.test(s))||(g==='acc'&&role==='rain'&&/雨伞/.test(s)));}
   if(wardrobe.some(function(i){return seen.has(String(i.id))&&matches(i);}))return;
