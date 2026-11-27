@@ -170,7 +170,7 @@ npm start                                # 或 node launch.cjs（显示局域网
 
 ### 3.5 项目主页开发
 
-1. 主页由 `index.html`、`homepage/home.css`、`homepage/home.js` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js` 和 `icon.svg`；示例照片在 `homepage/photos/`，预览不需要联网。
+1. 主页就是网页版，打开就能用：由 `index.html`、`homepage/home.css`、`homepage/home.js` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js` 和 `icon.svg`；照片都在 `homepage/photos/`，预览不需要联网（Inter Tight 字体加载失败时回落到系统字体）。访客的衣服和收藏存在浏览器 IndexedDB 的 `weave-fit-web` 数据库里，调试时可在开发者工具的「应用」面板查看或清空。
 2. 在仓库根目录启动静态服务器预览：
 
    ```sh
@@ -178,14 +178,16 @@ npm start                                # 或 node launch.cjs（显示局域网
    ```
 
    打开 `http://127.0.0.1:8765/`。用静态服务器预览最接近 Pages 的实际环境。
-3. 至少检查：桌面、768px 平板与 375px 手机宽度没有横向滚动；首屏天气轮播与手动切换、拍照入橱「换一张」、看天穿衣的各项设定与「换一套」「拿去自己调整」、三行滑动与随机、衣橱筛选都能使用，所有照片正常显示；系统开启「减少动态效果」时首屏不自动轮播、动画收敛；控制台没有报错。
-4. 示例单品只写在 `home.js` 的 `closet` 数组里，主页不读取任何个人数据。
-5. 替换或新增示例照片：
+3. 至少检查：桌面、768px 平板与 360px 手机宽度没有横向滚动；首屏随滚动换装、底部标题淡出、宣言区视差、风格卡展开与切换正常；拍照入橱添加（含照片和不含照片）、修改、删除，刷新后数据仍在；看天穿衣的各项设定与「换一套」「收藏」「拿去自己调整」、三行滑动与随机、三种衣橱切换、搭配收藏、导出与导入备份都能使用；系统开启「减少动态效果」时没有视差、模糊和位移；控制台没有报错。
+4. 示例单品只写在 `home.js` 的 `closet` 数组里；访客的数据只在访客自己的浏览器里，页面不向任何地址发送数据。
+5. 主页的三类照片：
+   - 人物形象照 `look-*.webp`（首屏与风格卡）由用户提供，拼贴单品图 `piece-*.webp` 由 Figma AI 按提示词生成（透明背景，只裁掉四周空白、按显示尺寸的 2 倍缩小，不从人物照片里抠图）。两类都是 AI 生成的风格示意，页脚已注明；替换时保持同样的说明。
+   - 示例衣橱的单品照片按下面的规则替换或新增。
+6. 替换或新增示例衣橱照片：
    - 只用 Unsplash 免费图库的照片（Unsplash License）。不用 Unsplash+ 付费图、电商或品牌商品图、带明显品牌标识的图，也不用 AI 生成或程序绘制的衣服。
    - 优先选单件完整入镜、背景干净、光线自然的照片，整体保持中性色调，和现有单品放在一起要协调。
    - 在 `closet` 中填写 `photo`（地址里 `photo-` 后面的编号）、`page`（原图页面地址 `unsplash.com/photos/` 后面的部分）和 `by`（摄影师）；同框有其他衣服时用 `rect`（原图像素 x,y,宽,高）裁掉。名称、类别、颜色、季节按照片如实填写，季节取值与 App 单品表单一致。
-   - 把照片下载到 `homepage/photos/`，文件名用两位单品编号。缩略图 `item-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=480&h=480&fit=crop&fm=jpg&q=72`，有 `rect` 时在 `?` 后加 `rect=<rect>&`；拍照入橱用图 `scan-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=960&fm=jpg&q=72`，不裁切，保持原图宽高比。例如 `curl -fsSL -o homepage/photos/item-19.jpg "<地址>"`（Windows PowerShell 中写 `curl.exe`）。
-   - 拍照入橱演示的数据不手写：照片放进 `homepage/photos/scan-编号.jpg` 后，在 `outfit-independent/` 中运行 `node scripts/export-scan-demo.cjs <编号>:<类别>`（需先下载两个本机模型），它会写出 `cutout-编号.jpg` 并打印一行 `scanData` 条目，粘贴到 `home.js` 的 `scanData` 即可。模型没有生成白底单品图的照片（如分割失败）不能用于演示。改完逐张确认框线贴住衣物，输出的名称与颜色不要手工润色。
+   - 把照片下载到 `homepage/photos/`，文件名用两位单品编号。缩略图 `item-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=480&h=480&fit=crop&fm=jpg&q=72`，有 `rect` 时在 `?` 后加 `rect=<rect>&`。例如 `curl -fsSL -o homepage/photos/item-19.jpg "<地址>"`（Windows PowerShell 中写 `curl.exe`）。
    - 页脚署名由 `closet` 自动生成，不需要另外维护。
 
 ### 3.6 发布 GitHub Pages

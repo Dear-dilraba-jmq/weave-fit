@@ -48,7 +48,7 @@ flowchart LR
 
 - 同一个 Node 进程既提供 `public/` 静态文件，也提供 `/api/*` 接口，浏览器只与本机后台通信。
 - 外部服务都由后台调用，密钥不进入浏览器；虚线表示只有配置后才会使用。
-- 项目主页是另一条独立的静态链路：`index.html` + `homepage/` + App 的公开脚本，发布到 GitHub Pages，不连接后台（见第 10 节）。
+- 项目主页是另一条独立的静态链路，也是打开就能用的网页版：`index.html` + `homepage/` + App 的公开脚本，发布到 GitHub Pages，不连接后台，访客的数据存在自己浏览器的 IndexedDB 里（见第 10 节）。
 
 ## 3. 技术栈
 
@@ -100,10 +100,10 @@ flowchart LR
 
 | 文件 | 职责 |
 | --- | --- |
-| `index.html` | 页面结构与文案：首屏、数字、痛点、四个功能演示、三步开始、隐私、常见问题、下载与启动、页脚署名 |
-| `homepage/home.css` | 设计变量、手机样机、功能演示、响应式与「减少动态效果」 |
-| `homepage/home.js` | 示例衣橱数据（18 张 Unsplash 照片）、首屏天气轮播、拍照入橱演示、看天穿衣、自己滑着搭、衣橱筛选、照片署名 |
-| `homepage/photos/` | 示例衣橱照片：18 张 480×480 缩略图 `item-编号.jpg`、5 张 960px 宽的拍照入橱用图 `scan-编号.jpg`，以及本机模型生成的白底单品图 `cutout-编号.jpg`（600×600，JPEG） |
+| `index.html` | 页面结构与文案：顶栏、首屏、宣言区、风格卡、四个功能（拍照入橱、看天穿衣、自己滑着搭、我的衣橱）、隐私、常见问题、开始使用、页脚署名 |
+| `homepage/home.css` | ALP1NE 版式（胶囊、首屏、宣言区、风格卡）、功能面板、响应式与「减少动态效果」 |
+| `homepage/home.js` | 滚动驱动的画面（一个 rAF 循环）、示例衣橱数据、浏览器本地存储（IndexedDB）、拍照入橱、看天穿衣、自己滑着搭、我的衣橱与搭配收藏、备份导出与导入、照片署名 |
+| `homepage/photos/` | 18 张示例单品缩略图 `item-编号.jpg`（Unsplash）；9 张人物形象照 `look-*.webp`；7 张透明背景的拼贴单品图 `piece-*.webp` |
 | `scripts/build-pages.cjs` | 把主页及依赖同步到 `docs/`（先清空 `docs/homepage/` 与 `docs/outfit-independent/`） |
 
 ## 5. 数据模型
@@ -242,24 +242,26 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 
 ## 10. 项目主页
 
-脚本按依赖顺序加载：`style-guide.js` → `outfit-plan.js` → `homepage/home.js`。版式参考同类数字衣橱产品的官网（调研见 [WORK.md](WORK.md)）：一句话主张与手机样机 → 数字 → 痛点 → 四个可操作的功能演示 → 三步开始 → 隐私 → 常见问题 → 下载与启动。
+主页就是网页版：打开就能用，不用下载、安装或注册。脚本按依赖顺序加载：`style-guide.js` → `outfit-plan.js` → `homepage/home.js`。版式复刻 ALP1NE 提示词网站（固定全屏首屏随滚动换画面、白色方角胶囊顶栏、底部差值混合大标题、橄榄色宣言区与视差拼贴、滚动展开的全屏风格卡），之后接四个可用的功能、隐私、常见问题和开始使用。
 
 | 区块 | 实现 |
 | --- | --- |
-| 首屏「今日搭配」 | 4 组天气预设（20° 多云、14° 小雨、30° 晴、4° 大风）分别调用 `OutfitPlanner.suggest`；`variant` 相当于在 App 里点了几次「换一套」，让四组尽量展示不同单品。搭配板取 4 格：有连衣裙时为外套、连衣裙、鞋、包，否则为外套、上装、下装、鞋、包中实际选到的前 4 件。每 4.6 秒切换一组，指针停在样机上、首屏离开视口或页面隐藏时暂停，点预设按钮后停止自动轮播；开启「减少动态效果」时不自动轮播 |
-| 01 拍照入橱 | 示例照片轮换，数据在 `home.js` 的 `scanData`：衣物区域 `box`、名称、类别、主色、季节都来自 App 本机 SegFormer + CLIP 对 `scan-编号.jpg` 的真实输出（用 `scripts/export-scan-demo.cjs` 离线导出，页面不在浏览器里推理）。照片以 `object-fit: cover` 铺满 4:5 画面，`scanBox()` 把 `box`（原图宽高的百分比）换算成画面坐标；框线从整幅收拢到衣物处，依次填出四个字段，最后在右下角淡入真实生成的白底单品图 `cutout-编号.jpg`。「换一张」只在 `scanData` 里有数据的照片间轮换 |
-| 02 看天穿衣 | 季节（套用 `seasonDefaults` 的示例温度）、实际温度（−10…40°C）、天气、风格、场合 → `OutfitPlanner.suggest`，与 App 同一套规则；缺少的单品显示衣架占位和「建议添置」，提醒列出 `warnings`、待补建议与 `tips`。「换一套」递增 `variant`，「拿去自己调整」把方案放进下一块 |
-| 03 自己滑着搭 | 「上装 / 外套」「下装」「鞋子」三行，支持滑动、按钮、方向键与 Home / End、随机和重置；按看天穿衣当前的温度用 `unsuitable()` 检查，只提醒不替换；需要外搭时只推荐示例衣橱里此刻适温的外套 |
-| 04 数字衣橱 | 按类别筛选 18 件示例单品，点一件放进「自己滑着搭」；包袋不在三行里，点选时提示由规则搭配自动配上 |
-| 页脚署名 | 由 `closet` 生成 18 条署名：单品名链接到 Unsplash 原图页，并注明摄影师 |
+| 顶栏 | 白色方角胶囊：品牌、浏览器本地时间（每秒刷新）、功能 / 风格 / 我的衣橱、常见问题、开始使用；≤1024px 只留品牌和「菜单」，菜单是带模糊背景的全屏浮层，关闭时 `inert` |
+| 首屏 | 5 张人物形象照 `look-*.webp` 叠在固定层里，滚过 250vh 的占位区时依次换装：每张停留大半段，只在中间 40% 淡入下一张，同时缓慢拉远（代替提示词里随滚动拖动进度的视频）。左上角胶囊显示当前造型的风格与温度；底部标题在首屏前 85% 的滚动里上移 150px、缩到 0.8、模糊到 24px 并淡出 |
+| 宣言区 | 橄榄色 `#575234` 底、差值混合的大字；7 件生成的单品图 `piece-*.webp` 都放在文字下面做视差（文字叠在衣服上仍清楚）：区块中心与视口中心的距离归一到 −1.2…1.2，每件按 `data-speed`、`data-drift`、`data-rot` 移动、漂移和旋转 |
+| 风格卡 | `.looks` 比视口高 3400px，舞台 sticky 固定：前 700px 窗口从中心展开（easeInOutCubic），之后每 900px 换一张卡（先停留，再在中间 60% 的距离里滑过去），卡内照片左右各多出 12% 并反向位移，宽屏上需要上下裁切时从下方裁，保住人物的头；停止滚动时如果停在两张卡之间，平滑滚到最近一张卡的停留区（`scrollend`，不支持时滚动停 220ms 后）；中央的大号符号每换一张随机换一个。区块向上叠住宣言区最后一屏，窗口在宣言文字还没滚完时就开始展开。「按某风格搭一套」把风格带进看天穿衣 |
+| 01 拍照入橱 | 表单添加 / 修改 / 删除我的单品：照片在浏览器里按长边 900px 缩小并转成 JPEG；主色取画面中间、和边缘背景色差得多的像素里最常见的颜色，再按 redmean 距离对应到常用颜色名；名称按「颜色 + 类别」建议，手动改过就不再覆盖。删除需要连点两次 |
+| 02 看天穿衣 | 季节（套用 `seasonDefaults` 的示例温度）、实际温度（−10…40°C）、天气、风格、场合 → `OutfitPlanner.suggest`，与 App 同一套规则，用当前选中的衣橱；缺少的单品显示衣架占位和淘宝搜索链接。「换一套」递增 `variant`，「收藏」存下这一套，「拿去自己调整」把方案放进下一块 |
+| 03 自己滑着搭 | 「上装 / 外套」「下装」「鞋子」三行（与 App 相同），支持滑动、按钮、方向键与 Home / End、随机、重置和收藏；衣橱变化时重建，能保留的选择按单品保留；某一行没有单品时提示去添加。按看天穿衣当前的温度用 `unsuitable()` 检查，只提醒不替换 |
+| 04 我的衣橱 | 左侧切换我的衣橱 / 示例衣橱 / 搭配收藏：选哪个衣橱，看天穿衣和自己滑着搭就用哪个（我的衣橱为空时仍用示例衣橱）。我的单品点一下回到 01 修改；示例单品点一下放进三行滑动。导出备份把单品（照片转成 data URL）和收藏写进一个 JSON 文件；导入时逐项校验，只接受 jpeg / png / webp 的 data URL，同一编号覆盖 |
+| 页脚署名 | 由 `closet` 生成 18 条示例单品照片署名：单品名链接到 Unsplash 原图页，并注明摄影师 |
 
-示例照片与数据：
+数据与照片：
 
-- `closet` 中每件单品有 `photo`（Unsplash 图片编号）、`page`（原图页面）、`by`（摄影师），可选 `rect`（原图像素裁切区域，避开同框的其他衣服）；`photo` 与 `rect` 记录本地照片的来源，重新下载时使用。拍照入橱用到的照片另有 `scanData` 条目（`box`、`size`、识别字段）。
-- 照片随主页发布在 `homepage/photos/`，`photoUrl()` 按单品编号拼出本地路径：`item-编号.jpg` 是 480×480 的正方形缩略图（按 `rect` 裁切后缩放），首屏、列表、三行滑动和衣橱共用一张；`scan-编号.jpg` 是 960px 宽的整张图，宽高比与原图一致，`box` 的百分比因此仍然适用。两种图都由 Unsplash 图床按 `photo`、`rect` 生成后下载（JPEG，质量 72）。首屏图片立即加载，其余 `loading="lazy"`；首屏其余三组和拍照入橱的其余照片会预先加载，切换时不出现空白。
-- 照片来自 Unsplash 免费图库（Unsplash License），只作演示，页面与页脚都注明不是在售商品，也不是任何用户的衣橱。
-
-主页只读取静态文件，不调用后台，不读取或保存任何个人数据；支持 375px 手机宽度与 `prefers-reduced-motion`（`animate()` 在减少动态效果时不执行，CSS 关闭过渡）。
+- 访客的数据存在浏览器 IndexedDB 数据库 `weave-fit-web` 的 `items`（单品，照片为 Blob）与 `looks`（收藏：单品编号、当时的名字、场景说明）两个表里；第一次保存后调用 `navigator.storage.persist()`。浏览器不允许使用 IndexedDB 时只保存在本次打开的页面里，并提示访客。本站是静态网页，不接收任何数据。
+- 示例衣橱 `closet` 中每件单品有 `photo`（Unsplash 图片编号）、`page`（原图页面）、`by`（摄影师），可选 `rect`（原图像素裁切区域）；`item-编号.jpg` 是 480×480 的正方形缩略图，由 Unsplash 图床按 `photo`、`rect` 生成后下载（JPEG，质量 72）。
+- 人物形象照 `look-*.webp`（1670×941）由用户提供，用作首屏与风格卡；拼贴单品图 `piece-*.webp` 由 Figma AI（gpt-image）按提示词生成，原生透明背景，只裁掉四周的空白并按显示尺寸的 2 倍缩小。两类图都是 AI 生成的风格示意，页脚注明。
+- 页面只读取静态文件，不调用后台；支持 360px 手机宽度与 `prefers-reduced-motion`（滚动驱动的数值直接到位，不做视差、模糊和位移，CSS 关闭过渡）。
 
 ## 11. PWA 与缓存
 
@@ -301,7 +303,6 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 | `scripts/setup-garment-model.cjs` | 下载固定版本的衣物分割模型 |
 | `scripts/setup-item-recognizer.cjs` | 下载单品识别模型 |
 | `scripts/prepare-import.cjs` | `node scripts/prepare-import.cjs <导出目录> <输出.json>`：把旧网站的单用户导出（`profiles.json`、`wardrobe_items.json`、`outfits.json`、`images/`）转换为备份格式 |
-| `scripts/export-scan-demo.cjs` | `node scripts/export-scan-demo.cjs 7:外套 16:包袋`：用本机模型处理主页 `scan-编号.jpg`，输出 `scanData` 条目并写入 `cutout-编号.jpg`（需先下载两个模型） |
 | `scripts/fashn-inference.py` | 本机 FASHN VTON 推理，由 `fashn-local.cjs` 调用 |
 | `scripts/preview-test.cjs` | 启动隔离的浏览器检查实例，不打开或复制用户数据库 |
 | `scripts/public-host.cjs` · `public-bridge.cjs` · `stop-public.cjs` | 公网测试入口（默认停用） |
@@ -327,7 +328,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 | --- | --- | --- |
 | 本机 + 局域网 | `node launch.cjs`，同一 Wi-Fi 的手机用局域网地址访问 | 个人日常使用（默认） |
 | 自有域名 | HTTPS 反向代理到本机端口，设置 `APP_HOSTS=<域名>` 与 `COOKIE_SECURE=1`，持久化 `data/` 并定期备份 | 需要外网访问时 |
-| 项目主页 | `node scripts/build-pages.cjs` 后由 GitHub Pages 发布 `main` 分支的 `/docs` | 展示与演示 |
+| 项目主页（网页版） | `node scripts/build-pages.cjs` 后由 GitHub Pages 发布 `main` 分支的 `/docs` | 打开就能用：衣橱、规则搭配、三行滑动、收藏与备份，数据存在访客自己的浏览器里 |
 
 完整 App 需要持久的 SQLite 与本机模型，不能部署到 GitHub Pages 这类纯静态托管。
 
@@ -338,7 +339,7 @@ CREATE TABLE imports(owner TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(owne
 - 没有邮箱验证与找回，忘记密码只能在本机终端重设。
 - 识别为零样本分类，季节只按可见款式估计；复杂背景或多件叠放时分割可能不准确。
 - 规则引擎为启发式，搭配结果取决于衣橱里实际有哪些单品。
-- 项目主页拍照入橱演示是离线导出的模型结果，页面里不现场推理；个别结果会不准（例如纱质半身裙的抠图边缘有缺口、名称被识别成「棕黑配色」），演示保留原样，不做修饰。
+- 网页版的数据只在一台设备的一个浏览器里，换设备要靠导出 / 导入备份；清除网站数据或无痕窗口关闭后会丢失。网页版拍照入橱只取主色和缩小照片，不抠图，也不识别类别和款式（完整 App 的本机模型没有放进网页）。
 - 仓库暂无许可证文件。
 
 ## 17. 路线图

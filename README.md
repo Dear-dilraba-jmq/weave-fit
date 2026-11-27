@@ -4,7 +4,7 @@
 
 > **English summary** — Weave Fit is a local-first digital wardrobe. Photograph your clothes, let on-device models fill in name, category, colour and season, then build outfits by temperature-aware rules or by swiping three rows (tops, bottoms, shoes) yourself. Everything runs on your own computer with Node.js 24 and SQLite; text AI, try-on images and Taobao product cards are optional add-ons you configure locally.
 
-仓库根目录的 [index.html](index.html) 是可直接展示的项目主页，版式参考市面上的数字衣橱产品官网（Whering、Acloset、Indyx、Cladwell，调研见 [WORK.md](WORK.md)）：首屏手机样机按几组天气轮播「今日搭配」，往下依次是拍照入橱（展示本机模型对示例照片的真实识别结果）、看天穿衣（在浏览器里运行与 App 相同的温度规则）、三行滑动自己搭和可筛选的示例衣橱，手机上同样可用，不需要登录。示例衣橱的 18 件单品是 Unsplash 上的真实服装照片（Unsplash License），页脚逐张注明摄影师和原图链接；这些照片只用于演示，不是在售商品，也不是任何用户的衣橱。
+仓库根目录的 [index.html](index.html) 是打开就能用的网页版：不用下载、安装或注册，手机和电脑都能用，访客的衣服、照片和收藏只保存在自己浏览器的 IndexedDB 里，本站不接收任何数据。版式复刻 ALP1NE 提示词网站（首屏随滚动换装、白色方角胶囊顶栏、橄榄色宣言区与视差拼贴、滚动展开的全屏风格卡），往下是四个可用的功能：拍照入橱（在浏览器里缩小照片、自动取主色）、看天穿衣（与 App 同一套温度规则）、三行滑动自己搭，以及我的衣橱 / 示例衣橱 / 搭配收藏，并可导出、导入备份。人物形象照与拼贴单品图是 AI 生成的风格示意；示例衣橱的 18 件单品是 Unsplash 上的真实服装照片（Unsplash License），页脚逐张注明摄影师和原图链接。
 
 ## 功能一览
 
@@ -22,8 +22,8 @@
 ## 项目结构
 
 ```text
-index.html              项目主页（今日搭配首屏与四个功能演示）
-homepage/               主页样式 home.css；交互与示例衣橱数据 home.js；示例照片 photos/
+index.html              网页版主页（打开就能用：首屏、风格卡与四个功能）
+homepage/               主页样式 home.css；交互、浏览器本地存储与示例衣橱数据 home.js；照片 photos/
 docs/                   GitHub Pages 发布目录（由 scripts/build-pages.cjs 生成）
 scripts/build-pages.cjs 把主页及其依赖同步到 docs/
 outfit-independent/     完整 App：前端 public/、Node.js 后台、脚本 scripts/、测试 test/
@@ -33,7 +33,7 @@ WORK.md                 竞品调研、差距分析、迭代记录与待办
 启动独立版.cmd           Windows 启动入口
 ```
 
-主页直接复用完整 App 的 `style-guide.js` 和 `outfit-plan.js`（温度规则），演示结果与 App 的本地规则一致；规则提示缺少的单品时，主页用衣架图标占位。
+主页直接复用完整 App 的 `style-guide.js` 和 `outfit-plan.js`（温度规则），搭配结果与 App 的本地规则一致；规则提示缺少的单品时，用衣架图标占位并给出淘宝搜索链接。
 
 ## 运行完整 App
 
@@ -81,9 +81,9 @@ node scripts/build-pages.cjs
 
 将更新后的根目录主页和 `docs/` 一起提交即可。发布目录只包含主页、演示代码和图标。本地预览可在仓库根目录启动任意静态服务器，例如 `python -m http.server 8765`，再打开 `http://127.0.0.1:8765/`。
 
-主页的 23 张示例照片保存在 `homepage/photos/`（约 1.2 MB），由 `build-pages.cjs` 一并发布，不依赖外部图床；替换或新增照片的做法见 [WORKFLOW.md 3.5](WORKFLOW.md#35-项目主页开发)。
+主页的照片保存在 `homepage/photos/`（18 张示例单品照片、9 张人物形象照、7 张拼贴单品图，约 2.2 MB），由 `build-pages.cjs` 一并发布，不依赖外部图床；替换或新增照片的做法见 [WORKFLOW.md 3.5](WORKFLOW.md#35-项目主页开发)。
 
-GitHub Pages 是静态托管：可以展示本主页与搭配演示，不能运行 Node.js、SQLite、账号登录、照片上传或本机模型。完整 App 需要上述本地后台，或另行部署到支持持久存储的服务器。[GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
+GitHub Pages 是静态托管：网页版的衣橱、规则搭配、三行滑动、收藏与备份都在访客的浏览器里运行，不需要后台。完整 App 的账号、SQLite、本机模型抠图识别、文字 AI 与本人穿搭图仍需要上述本地后台，或另行部署到支持持久存储的服务器。[GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
 
 ## 验证与数据保护
 
