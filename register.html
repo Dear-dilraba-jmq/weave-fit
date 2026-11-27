@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#575234">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="description" content="注册穿搭魔镜：在这台设备上建一个账号，保存自己的衣橱、收藏和个人档案。">
+  <title>注册 · 穿搭魔镜 Weave Fit</title>
+  <link rel="icon" href="./outfit-independent/public/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&display=swap" media="print" data-font>
+  <link rel="stylesheet" href="./homepage/home.css">
+  <script src="./homepage/store.js" defer></script>
+  <script src="./homepage/account.js" defer></script>
+</head>
+<body class="auth-page" data-page="register">
+  <a class="skip" href="#authForm">跳到注册表单</a>
+  <img class="auth-bg" src="homepage/photos/auth-register.webp" alt="" width="1672" height="941" fetchpriority="high" aria-hidden="true">
+  <header id="siteHeader">
+    <div class="header-group header-left">
+      <a class="cell" href="./index.html">穿搭魔镜 <small>WEAVE FIT</small></a>
+    </div>
+    <div class="header-group header-right">
+      <a class="cell" href="./index.html#weather">先看看示例衣橱</a>
+      <a class="cell cell-dark" href="./login.html">登录</a>
+    </div>
+  </header>
+  <main class="auth-main" id="main">
+    <form class="auth-card" id="authForm" novalidate aria-labelledby="authTitle">
+      <p class="index-cell">注册 · SIGN UP</p>
+      <h1 id="authTitle">开一个自己的衣橱</h1>
+      <p class="auth-lead">家里每个人各注册一个，衣橱、收藏和个人档案互不打扰。</p>
+      <label class="auth-field">昵称<input id="nickname" autocomplete="username" maxlength="24" placeholder="怎么称呼你" required></label>
+      <label class="auth-field">密码 <small>10–200 位</small><input type="password" id="password" autocomplete="new-password" minlength="10" maxlength="200" required></label>
+      <label class="auth-field">再输入一次密码<input type="password" id="confirm" autocomplete="new-password" minlength="10" maxlength="200" required></label>
+      <label class="auth-check"><input type="checkbox" id="remember" checked>在这台设备上记住我</label>
+      <button type="submit" class="button primary auth-submit" id="submit">注册并进入衣橱</button>
+      <p class="auth-status" id="status" role="status" aria-live="polite"></p>
+      <p class="auth-switch">已经有账号？<a href="./login.html">直接登录</a></p>
+      <p class="auth-note">账号和衣橱只保存在这台设备的浏览器里，不会上传，也不需要手机号或邮箱。注册后会给你一个找回码，忘记密码时用它重设。密码用来区分家人、防止误操作，数据本身没有加密。</p>
+    </form>
+  </main>
+  <p class="auth-title" aria-hidden="true">每天，都穿得像自己。</p>
+</body>
+</html>

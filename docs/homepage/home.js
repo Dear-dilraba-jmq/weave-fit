@@ -1,13 +1,16 @@
-/* 穿搭魔镜 · 网页版（ALP1NE 版式）：打开就能用，不用下载、安装或注册。
-   顶栏时钟与手机菜单；一个 requestAnimationFrame 循环驱动首屏换装、底部标题、视差拼贴和风格卡；
-   之后是网页版衣橱：拍照入橱（在浏览器里缩小照片、取主色）、看天穿衣、自己滑着搭、我的衣橱 / 示例衣橱 / 搭配收藏、备份导出与导入。
-   访客添加的衣服和收藏只保存在这台设备的浏览器里（IndexedDB），本站不接收任何数据。
-   示例衣橱的单品用真实照片（Unsplash，见页脚署名）；搭配规则复用完整 App 的 outfit-plan.js，这里不重复实现规则。 */
+/* 穿搭魔镜 · 网页版（ALP1NE 版式）：打开就能用，不用下载或安装。
+   顶栏时钟、账号入口与手机菜单；一个 requestAnimationFrame 循环驱动首屏换装、底部标题、视差拼贴和风格卡；
+   之后是网页版衣橱：拍照入橱（浏览器里自动抠图并识别名称、类别和季节，规则与完整 App 同一份）、看天穿衣、自己滑着搭、
+   我的衣橱 / 示例衣橱 / 搭配收藏 / 个人档案、参考图导出、备份导出与导入。
+   账号、单品、收藏和档案由 store.js 存在这台设备的浏览器里（IndexedDB），本站不接收任何数据；没登录时用示例衣橱体验全部功能。
+   示例衣橱的单品用真实照片（Unsplash，见页脚署名）；搭配规则复用完整 App 的 outfit-plan.js，识别规则复用 garment-rules.js。 */
 (function(){
   'use strict';
   var doc=document,root=doc.documentElement;
   root.classList.add('js-ready');
-  var Planner=window.OutfitPlanner;
+  /* 字体样式表先按打印样式加载（不阻塞首屏），脚本就绪后再启用：本页的内容安全策略不允许内联事件 */
+  doc.querySelectorAll('link[data-font]').forEach(function(link){link.media='all';});
+  var Planner=window.OutfitPlanner,Rules=window.GarmentRules,Store=window.WeaveStore;
   var motionQuery=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
   function reduced(){return !!motionQuery.matches;}
   function $(id){return doc.getElementById(id);}
@@ -17,7 +20,7 @@
   function scrollToEl(el){if(el)el.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'});}
   var ease='cubic-bezier(.2,.75,.2,1)';
 
-  /* 示例衣橱：还没添加自己的衣服时，看天穿衣、自己滑着搭和衣橱都用这一份。季节取值与完整 App 的单品表单一致。
+  /* 示例衣橱：没登录或还没添加自己的衣服时，看天穿衣、自己滑着搭和衣橱都用这一份。季节取值与完整 App 的单品表单一致。
      单品照片全部来自 Unsplash（Unsplash License：可免费使用，无需另行授权），已下载到 homepage/photos/ 随网页发布；文件末尾按 page 与 by 把每张的原图链接和摄影师写进页脚署名。
      photo 是该图在 images.unsplash.com 的编号，rect 为可选的裁切区域（原图像素 x,y,宽,高，用来避开同框的其他衣服）：两者记录本地照片的来源，重新下载时使用（见 WORKFLOW.md 3.5）。 */
   var closet=[
@@ -44,16 +47,16 @@
   var weatherIcons={'晴':'i-sun','多云':'i-cloud','大风':'i-wind','小雨':'i-rain','雨雪':'i-snow'};
   var weatherNames={'晴':'晴','多云':'多云','大风':'大风','小雨':'小雨','雨雪':'雨雪'};
 
-  /* ---------- 衣橱数据：示例衣橱 + 我的衣橱（访客自己添加，只存在本机浏览器）。source 决定看天穿衣和自己滑着搭用哪一个 ---------- */
+  /* ---------- 衣橱数据：示例衣橱 + 当前账号的衣橱。source 决定看天穿衣和自己滑着搭用哪一个 ---------- */
   var CATEGORIES=['上装','外套','下装','连衣裙','鞋履','包袋','配饰','其他'],SEASONS=['四季','春季','夏季','秋季','冬季','春秋','春夏','秋冬'];
-  var mine=[],saved=[],source='sample',index={};
+  var me=null,mine=[],saved=[],source='sample',index={};
   function reindex(){index={};closet.concat(mine).forEach(function(item){index[String(item.id)]=item;});}
   function find(id){return index[String(id)]||null;}
   function wardrobe(){return source==='mine'?mine:closet;}
-  function sourceName(){return source==='mine'?'我的衣橱':'示例衣橱';}
+  function sourceName(){return source==='mine'?(me?me.nickname+'的衣橱':'我的衣橱'):'示例衣橱';}
   reindex();
 
-  /* 单品图：访客的单品用浏览器里保存的照片（src），示例单品是 480×480 的本地照片（photo），没有照片的单品显示成该颜色的衣架；规则给出的「待补」单品只有虚线衣架 */
+  /* 单品图：账号的单品用浏览器里保存的照片（src），示例单品是 480×480 的本地照片（photo），没有照片的单品显示成该颜色的衣架；规则给出的「待补」单品只有虚线衣架 */
   function photoUrl(item){return 'homepage/photos/item-'+(item.id<10?'0':'')+item.id+'.jpg';}
   function visual(item,eager){
     var lazy=eager?'':' loading="lazy"';
@@ -69,7 +72,7 @@
     return slots;
   }
 
-  /* ---------- 顶栏：时钟（浏览器本地时间，每秒刷新）与手机 / 平板菜单 ---------- */
+  /* ---------- 顶栏：时钟（浏览器本地时间，每秒刷新）、账号入口与手机 / 平板菜单 ---------- */
   var clocks=Array.from(doc.querySelectorAll('[data-clock]')),weekdays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
   function two(n){return (n<10?'0':'')+n;}
   function tickClock(){
@@ -89,10 +92,25 @@
   }
   if(menuToggle&&menu){
     menuToggle.addEventListener('click',function(){setMenu(!menu.classList.contains('active'));});
-    menu.addEventListener('click',function(e){if(e.target.closest('a')||e.target===menu)setMenu(false);});
+    menu.addEventListener('click',function(e){if(e.target.closest('a,button')||e.target===menu)setMenu(false);});
     doc.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.classList.contains('active')){setMenu(false);menuToggle.focus();}});
     if(window.matchMedia){var wide=window.matchMedia('(min-width: 1025px)');var onWide=function(){if(wide.matches)setMenu(false);};if(wide.addEventListener)wide.addEventListener('change',onWide);else if(wide.addListener)wide.addListener(onWide);}
   }
+  /* 没登录：显示「登录」「注册」；登录后：显示昵称（点开个人档案）和「退出」（顶栏与手机菜单各一组） */
+  function renderAccountUi(){
+    doc.querySelectorAll('[data-guest]').forEach(function(el){el.hidden=!!me;});
+    doc.querySelectorAll('[data-member]').forEach(function(el){el.hidden=!me;});
+    doc.querySelectorAll('[data-member-name]').forEach(function(el){el.textContent=me?me.nickname:'';});
+    if(formGate)formGate.hidden=!!me;
+    renderMeRef();
+  }
+  doc.addEventListener('click',function(e){
+    if(e.target.closest('[data-open-profile]')){setView('profile');return;}
+    var out=e.target.closest('[data-logout]');
+    if(!out)return;
+    e.preventDefault();Store.logout();me=null;mine.forEach(release);mine=[];saved=[];source='sample';closetView='sample';
+    resetForm();refreshAll(false);renderAccountUi();closetNote('已退出登录');
+  });
 
   /* ---------- 滚动驱动的画面（提示词里的 ALP1NE 效果）：首屏换装、底部标题、视差拼贴、风格卡展开与切换 ----------
      只有一个 requestAnimationFrame 循环：滚动或尺寸变化时启动，各数值按 lerp 逐帧逼近目标，全部追上后自动停下，不空转。
@@ -208,54 +226,39 @@
   if('ResizeObserver' in window)new ResizeObserver(function(){measure();}).observe(doc.body);
   measure();
 
-  /* ---------- 浏览器本地存储（IndexedDB）。不可用时（如部分无痕窗口）只保存在这次打开的页面里，并提示访客 ---------- */
-  var dbPromise=null,volatile=false,persistAsked=false;
-  function openDb(){
-    if(dbPromise)return dbPromise;
-    dbPromise=new Promise(function(resolve){
-      try{
-        var req=window.indexedDB.open('weave-fit-web',1);
-        req.onupgradeneeded=function(){var d=req.result;['items','looks'].forEach(function(name){if(!d.objectStoreNames.contains(name))d.createObjectStore(name,{keyPath:'id'});});};
-        req.onsuccess=function(){resolve(req.result);};
-        req.onerror=req.onblocked=function(){resolve(null);};
-      }catch(e){resolve(null);}
-    }).then(function(d){if(!d)volatile=true;return d;});
-    return dbPromise;
-  }
-  function dbRun(name,mode,run){
-    return openDb().then(function(d){
-      if(!d)return null;
-      return new Promise(function(resolve,reject){
-        var t=d.transaction(name,mode),req=run(t.objectStore(name));
-        t.oncomplete=function(){resolve(req?req.result:null);};
-        t.onerror=t.onabort=function(){reject(t.error||new Error('浏览器拒绝了保存'));};
-      });
-    });
-  }
-  function dbAll(name){return dbRun(name,'readonly',function(s){return s.getAll();}).then(function(v){return Array.isArray(v)?v:[];});}
-  function dbPut(name,value){return dbRun(name,'readwrite',function(s){return s.put(value);});}
-  function dbDelete(name,id){return dbRun(name,'readwrite',function(s){return s.delete(id);});}
-  /* 第一次保存后请浏览器尽量不要自动清理这些数据 */
-  function askPersist(){if(!persistAsked&&navigator.storage&&navigator.storage.persist){persistAsked=true;navigator.storage.persist().catch(function(){});}}
-  function newId(prefix){return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  /* ---------- 单品与收藏的记录格式（store.js 负责存取） ---------- */
+  function byCreated(a,b){return a.created-b.created;}
+  function byNewest(a,b){return b.created-a.created;}
   /* 写进数据库的字段；src 是页面里临时生成的照片地址，不保存 */
-  function record(item){return {id:item.id,name:item.name,category:item.category,color:item.color,hex:item.hex,season:item.season,note:item.note||'',created:item.created,image:item.image||null};}
+  function record(item){return {id:item.id,owner:item.owner,name:item.name,category:item.category,color:item.color,hex:item.hex,season:item.season,note:item.note||'',tags:item.tags||[],created:item.created,image:item.image||null,original:item.original||null};}
   function cleanItem(raw){
     if(!raw||typeof raw.id!=='string'||!raw.id)return null;
     var name=String(raw.name||'').trim().slice(0,40);if(!name)return null;
-    var item={id:raw.id.slice(0,40),name:name,category:CATEGORIES.indexOf(raw.category)>=0?raw.category:'其他',color:String(raw.color||'').trim().slice(0,12),hex:/^#[0-9a-f]{6}$/i.test(raw.hex)?raw.hex.toLowerCase():'#d8d1c6',season:SEASONS.indexOf(raw.season)>=0?raw.season:'四季',note:String(raw.note||'').trim().slice(0,60),created:Number(raw.created)||Date.now(),image:raw.image instanceof Blob?raw.image:null};
+    var item={id:raw.id.slice(0,40),owner:typeof raw.owner==='string'?raw.owner:null,name:name,category:CATEGORIES.indexOf(raw.category)>=0?raw.category:'其他',color:String(raw.color||'').trim().slice(0,16),hex:/^#[0-9a-f]{6}$/i.test(raw.hex)?raw.hex.toLowerCase():'#d8d1c6',season:SEASONS.indexOf(raw.season)>=0?raw.season:'四季',note:String(raw.note||'').trim().slice(0,60),tags:Array.isArray(raw.tags)?raw.tags.slice(0,8).map(function(t){return String(t).slice(0,12);}):[],created:Number(raw.created)||Date.now(),image:raw.image instanceof Blob?raw.image:null,original:raw.original instanceof Blob?raw.original:null};
     if(item.image)item.src=URL.createObjectURL(item.image);
     return item;
   }
+  function release(item){if(item&&item.src)URL.revokeObjectURL(item.src);}
   function cleanLook(raw){
     if(!raw||typeof raw.id!=='string'||!raw.id||!Array.isArray(raw.ids))return null;
-    return {id:raw.id.slice(0,40),created:Number(raw.created)||Date.now(),source:raw.source==='mine'?'mine':'sample',ids:raw.ids.slice(0,8).map(String),names:Array.isArray(raw.names)?raw.names.slice(0,8).map(function(n){return String(n).slice(0,40);}):[],context:String(raw.context||'').slice(0,80)};
+    return {id:raw.id.slice(0,40),owner:typeof raw.owner==='string'?raw.owner:null,created:Number(raw.created)||Date.now(),source:raw.source==='mine'?'mine':'sample',ids:raw.ids.slice(0,8).map(String),names:Array.isArray(raw.names)?raw.names.slice(0,8).map(function(n){return String(n).slice(0,40);}):[],context:String(raw.context||'').slice(0,80)};
   }
-  function byCreated(a,b){return a.created-b.created;}
-  function byNewest(a,b){return b.created-a.created;}
+  /* 读当前账号的单品和收藏；没登录时我的衣橱为空 */
+  function loadAccount(){
+    return Store.currentPerson().then(function(person){
+      me=person;mine.forEach(release);mine=[];saved=[];
+      if(!me)return;
+      return Promise.all([Store.all('items'),Store.all('looks')]).then(function(r){
+        mine=r[0].filter(function(x){return x.owner===me.id;}).map(cleanItem).filter(Boolean).sort(byCreated);
+        saved=r[1].filter(function(x){return x.owner===me.id;}).map(cleanLook).filter(Boolean).sort(byNewest);
+      });
+    });
+  }
 
-  /* ---------- 照片在浏览器里处理：按长边 900px 缩小、转成 JPEG 保存；主色取画面中间、和背景差得多的像素里最常见的颜色 ---------- */
+  /* ---------- 照片：在浏览器里按长边 900px 缩小、转成 JPEG；主色取画面中间、和边缘背景色差得多的像素里最常见的颜色，颜色名与完整 App 同一套规则 ---------- */
   function toHex(r,g,b){return '#'+[r,g,b].map(function(v){return ('0'+Math.round(clamp(v,0,255)).toString(16)).slice(-2);}).join('');}
+  function rgbOf(hex){var v=parseInt(hex.slice(1),16);return [v>>16&255,v>>8&255,v&255];}
+  function colorName(hex){var c=rgbOf(hex);return Rules?Rules.colorName(c[0],c[1],c[2]):'';}
   function mainColor(data,w,h){
     var step=Math.max(1,Math.round(Math.sqrt(w*h/60000))),edge=Math.max(2,Math.round(Math.min(w,h)*.05)),r=0,g=0,b=0,n=0,x,y,i;
     for(y=0;y<h;y+=step)for(x=0;x<w;x+=step){if(x>edge&&x<w-edge&&y>edge&&y<h-edge)continue;i=(y*w+x)*4;r+=data[i];g+=data[i+1];b+=data[i+2];n++;}
@@ -272,20 +275,12 @@
     if(!best||best.n<all[3]*.04)return toHex(all[0]/all[3],all[1]/all[3],all[2]/all[3]);
     return toHex(best.r/best.n,best.g/best.n,best.b/best.n);
   }
-  var COLOR_NAMES=[['白色','#f4f3ef'],['米白','#ebe4d6'],['奶白','#f1ead9'],['浅灰','#c8c6c1'],['灰色','#8d8b87'],['深灰','#4c4b48'],['黑色','#1f1e1c'],['卡其色','#b5a68c'],['驼色','#b88c5a'],['焦糖色','#8e5a35'],['棕色','#6f4a30'],['深棕','#43301f'],['酒红','#6d2230'],['红色','#bf3a32'],['粉色','#e6b3b5'],['橙色','#d9793a'],['黄色','#e3c25a'],['浅蓝','#b5c4d8'],['牛仔蓝','#5b7ca3'],['蓝色','#3a66a0'],['藏蓝','#253350'],['绿色','#4e7a4c'],['橄榄绿','#6b6a3d'],['紫色','#7d5a9e'],['香芋紫','#b29bc6']];
-  function rgbOf(hex){var v=parseInt(hex.slice(1),16);return [v>>16&255,v>>8&255,v&255];}
-  /* 最接近的常用颜色名（redmean 加权的 RGB 距离） */
-  function colorName(hex){
-    var c=rgbOf(hex),best='',min=Infinity;
-    COLOR_NAMES.forEach(function(pair){var d=rgbOf(pair[1]),rm=(c[0]+d[0])/2,dr=c[0]-d[0],dg=c[1]-d[1],db=c[2]-d[2],dist=(2+rm/256)*dr*dr+4*dg*dg+(2+(255-rm)/256)*db*db;if(dist<min){min=dist;best=pair[0];}});
-    return best;
-  }
-  function readPhoto(file){
+  function readPhoto(file,max){
     return new Promise(function(resolve,reject){
       if(!file||!/^image\//.test(file.type||'')){reject(new Error('请选择一张图片文件'));return;}
       var url=URL.createObjectURL(file),img=new Image();
       img.onload=function(){
-        var scale=Math.min(1,900/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
+        var scale=Math.min(1,(max||900)/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
         var canvas=doc.createElement('canvas');canvas.width=w;canvas.height=h;
         var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
         var hex=mainColor(ctx.getImageData(0,0,w,h).data,w,h);
@@ -296,8 +291,13 @@
     });
   }
 
-  /* ---------- 01 拍照入橱：添加 / 修改 / 删除我的单品 ---------- */
-  var form=$('itemForm'),f={},editing=null,pending=null,nameTouched=false,colorTyped=false,deleteArmed=null;
+  /* ---------- 自动识别：第一次需要下载识别模型，访客同意后才下载；之后浏览器有缓存，选照片就直接识别。
+     访客不登录也能试，保存时才需要账号；「这次不用」只在本次打开页面期间有效 ---------- */
+  var recognizer=null,recogDeclined=false;
+  function loadRecognizer(){if(!recognizer)recognizer=import('./recognize.js').catch(function(e){recognizer=null;throw e;});return recognizer;}
+
+  /* ---------- 01 拍照入橱：添加 / 修改 / 删除我的单品（需要登录） ---------- */
+  var form=$('itemForm'),formGate=$('formGate'),f={},editing=null,pending=null,photoToken=0,nameTouched=false,colorTyped=false,categoryTouched=false,seasonTouched=false,deleteArmed=null;
   var NOUNS={'上装':'上衣','外套':'外套','下装':'下装','连衣裙':'连衣裙','鞋履':'鞋','包袋':'包','配饰':'配饰','其他':'单品'};
   function suggestedName(){return (f.color.value.trim()||colorName(f.hex.value))+NOUNS[f.category.value];}
   function setStatus(html,error){if(!f.status)return;f.status.classList.toggle('is-error',!!error);f.status.innerHTML=html;}
@@ -306,51 +306,122 @@
     if(src){f.preview.src=src;f.preview.hidden=false;f.drop.classList.add('has-photo');label.textContent='换一张照片';}
     else{f.preview.removeAttribute('src');f.preview.hidden=true;f.drop.classList.remove('has-photo');label.textContent='点这里拍照或选一张照片';}
   }
+  function dropPending(){if(pending){if(pending.url)URL.revokeObjectURL(pending.url);if(pending.cutoutUrl)URL.revokeObjectURL(pending.cutoutUrl);}pending=null;if(f.cutSwitch)f.cutSwitch.hidden=true;}
+  /* 有白底单品图时可以改回原图保存（与完整 App 的「白底图 / 原图」切换相同） */
+  function setCut(mode){
+    if(!pending||!pending.cutoutUrl)return;
+    pending.useRaw=mode==='raw';
+    Array.from(f.cutSwitch.children).forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.cut===mode));});
+    showPreview(pending.useRaw?pending.url:pending.cutoutUrl);
+  }
+  function setRecog(state,text,progress){
+    var box=f.recog;if(!box)return;
+    box.hidden=!state;box.dataset.state=state||'';
+    if(text!==undefined)f.recogText.textContent=text;
+    f.recogActions.hidden=state!=='offer';
+    f.recogBar.parentNode.hidden=state!=='loading';
+    if(progress!==undefined)f.recogBar.style.width=progress+'%';
+  }
   function resetForm(){
-    if(pending&&pending.url)URL.revokeObjectURL(pending.url);
-    clearTimeout(deleteArmed);
-    pending=null;editing=null;nameTouched=false;colorTyped=false;deleteArmed=null;
-    form.reset();showPreview('');
+    if(!form)return;
+    dropPending();clearTimeout(deleteArmed);photoToken++;
+    editing=null;nameTouched=false;colorTyped=false;categoryTouched=false;seasonTouched=false;deleteArmed=null;
+    form.reset();showPreview('');setRecog('');
     f.save.textContent='保存到我的衣橱';f.cancel.hidden=true;f.remove.hidden=true;f.remove.textContent='删除这件';
   }
   function editItem(item){
     resetForm();
-    editing=item;nameTouched=true;colorTyped=true;
+    editing=item;nameTouched=true;colorTyped=true;categoryTouched=true;seasonTouched=true;
     f.name.value=item.name;f.category.value=item.category;f.season.value=item.season;f.hex.value=item.hex;f.color.value=item.color;f.note.value=item.note||'';
     showPreview(item.src||'');
     f.save.textContent='保存修改';f.cancel.hidden=false;f.remove.hidden=false;
     setStatus('正在修改「'+esc(item.name)+'」，可以换照片或改任何一项。');
     scrollToEl($('add'));
   }
+  /* 把识别结果填进表单：手动改过的项不覆盖（与完整 App 相同） */
+  function applyRecognition(result,token){
+    if(token!==photoToken||!pending)return;
+    var a=result.attributes;
+    if(!nameTouched&&a.name)f.name.value=a.name;
+    if(!categoryTouched&&CATEGORIES.indexOf(a.category)>=0)f.category.value=a.category;
+    if(!seasonTouched&&SEASONS.indexOf(a.season)>=0)f.season.value=a.season;
+    if(!colorTyped&&a.color){f.color.value=a.color;if(result.hex)f.hex.value=result.hex;}
+    pending.tags=a.tags||[];
+    if(result.cutout){
+      if(pending.cutoutUrl)URL.revokeObjectURL(pending.cutoutUrl);
+      pending.cutout=result.cutout;pending.cutoutUrl=URL.createObjectURL(result.cutout);
+      f.cutSwitch.hidden=false;setCut('cut');
+    }
+    var notes=(a.warnings||[]).concat(result.cutoutMessage?[result.cutoutMessage]:[]);
+    setStatus('已自动填写'+(a.needsReview?'，<b>请核对</b>':'')+'：「'+esc(f.name.value)+'」'+(result.cutout?'，已生成白底单品图，请检查衣服是否完整（遮挡的部分不会自动补画）':'')+'。'+(notes.length?'<br>'+notes.map(esc).join(' '):'')+(me?'':'<br>登录后才能保存：<a href="./login.html">登录</a> 或 <a href="./register.html">注册</a>'));
+  }
+  function runRecognition(file,token){
+    setRecog('loading','正在准备识别…',0);
+    loadRecognizer().then(function(mod){
+      return mod.modelsCached().then(function(cached){
+        var label=cached?'正在加载识别模型':'正在下载识别模型（只需一次）';
+        if(token===photoToken)setRecog('loading',label+'…',0);
+        return mod.prepare(function(p){if(token===photoToken)setRecog('loading',label+' '+p+'%',p);});
+      }).then(function(){
+        if(token!==photoToken)return null;
+        setRecog('loading','正在抠图并识别…',100);
+        /* 和 App 一样：只有手动选过类别时才把类别交给识别，否则由模型判断大类 */
+        return mod.recognize(file,{category:categoryTouched?f.category.value:undefined});
+      });
+    }).then(function(result){
+      if(!result||token!==photoToken)return;
+      setRecog('');applyRecognition(result,token);
+    }).catch(function(err){
+      if(token!==photoToken)return;
+      setRecog('');setStatus('自动识别没有完成：'+esc(err&&err.message||'请稍后再试')+'。已保留照片和主色，可以手动填写。',true);
+    });
+  }
+  function offerRecognition(file,token){
+    if(recogDeclined)return;
+    loadRecognizer().then(function(mod){
+      return mod.modelsCached().then(function(cached){
+        if(token!==photoToken)return;
+        if(cached){runRecognition(file,token);return;}
+        setRecog('offer','自动识别：抠出白底单品图，填好名称、类别和季节。第一次要下载约 '+mod.DOWNLOAD_MB+' MB 识别模型（只需一次，照片不会上传）。');
+        f.recogStart.onclick=function(){runRecognition(file,token);};
+        f.recogSkip.onclick=function(){recogDeclined=true;setRecog('');setStatus('好的，这次只用主色。刷新页面后再选照片，还可以选择自动识别。');};
+      });
+    }).catch(function(){/* 识别模块加载失败（如离线）：只用主色 */});
+  }
   function handleFile(file){
     if(!file)return;
-    setStatus('正在处理照片…');
+    var token=++photoToken;
+    setStatus('正在处理照片…');setRecog('');
     readPhoto(file).then(function(result){
-      if(pending&&pending.url)URL.revokeObjectURL(pending.url);
-      pending={blob:result.blob,url:URL.createObjectURL(result.blob)};
+      if(token!==photoToken)return;
+      dropPending();
+      pending={blob:result.blob,url:URL.createObjectURL(result.blob),tags:[]};
       showPreview(pending.url);
       if(!colorTyped){f.hex.value=result.hex;f.color.value=colorName(result.hex);}
       if(!nameTouched)f.name.value=suggestedName();
       setStatus('已认出主色「'+esc(f.color.value)+'」。确认名称、类别和季节后保存。');
+      offerRecognition(file,token);
     },function(err){setStatus(esc(err.message||'照片处理失败'),true);});
   }
   if(form){
-    f={photo:$('itemPhoto'),drop:$('photoDrop'),preview:$('itemPreview'),hint:$('photoHint'),name:$('itemName'),category:$('itemCategory'),season:$('itemSeason'),hex:$('itemHex'),color:$('itemColor'),note:$('itemNote'),save:$('itemSave'),cancel:$('itemCancel'),remove:$('itemDelete'),status:$('itemStatus')};
+    f={photo:$('itemPhoto'),drop:$('photoDrop'),preview:$('itemPreview'),hint:$('photoHint'),name:$('itemName'),category:$('itemCategory'),season:$('itemSeason'),hex:$('itemHex'),color:$('itemColor'),note:$('itemNote'),save:$('itemSave'),cancel:$('itemCancel'),remove:$('itemDelete'),status:$('itemStatus'),recog:$('recogBox'),recogText:$('recogText'),recogActions:$('recogActions'),recogStart:$('recogStart'),recogSkip:$('recogSkip'),recogBar:$('recogBar'),cutSwitch:$('cutSwitch')};
     f.photo.addEventListener('change',function(){handleFile(f.photo.files&&f.photo.files[0]);f.photo.value='';});
+    f.cutSwitch.addEventListener('click',function(e){var b=e.target.closest('[data-cut]');if(b)setCut(b.dataset.cut);});
     ['dragenter','dragover'].forEach(function(type){f.drop.addEventListener(type,function(e){e.preventDefault();f.drop.classList.add('is-over');});});
     ['dragleave','drop'].forEach(function(type){f.drop.addEventListener(type,function(e){e.preventDefault();f.drop.classList.remove('is-over');});});
     f.drop.addEventListener('drop',function(e){handleFile(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]);});
     f.name.addEventListener('input',function(){nameTouched=f.name.value.trim()!=='';});
     f.color.addEventListener('input',function(){colorTyped=f.color.value.trim()!=='';if(!nameTouched)f.name.value=suggestedName();});
     f.hex.addEventListener('input',function(){if(!colorTyped)f.color.value=colorName(f.hex.value);if(!nameTouched)f.name.value=suggestedName();});
-    f.category.addEventListener('change',function(){if(!nameTouched&&(pending||f.name.value))f.name.value=suggestedName();});
+    f.category.addEventListener('change',function(){categoryTouched=true;if(!nameTouched&&(pending||f.name.value))f.name.value=suggestedName();});
+    f.season.addEventListener('change',function(){seasonTouched=true;});
     f.cancel.addEventListener('click',function(){resetForm();setStatus('已取消修改。');});
     f.remove.addEventListener('click',function(){
       if(!editing)return;
       if(!deleteArmed){f.remove.textContent='再点一次确认删除';deleteArmed=setTimeout(function(){deleteArmed=null;f.remove.textContent='删除这件';},4000);return;}
       var item=editing;
-      dbDelete('items',item.id).then(function(){
-        if(item.src)URL.revokeObjectURL(item.src);
+      Store.remove('items',item.id).then(function(){
+        release(item);
         mine=mine.filter(function(i){return i.id!==item.id;});
         resetForm();
         if(!mine.length){source='sample';closetView='sample';}
@@ -360,26 +431,32 @@
     });
     form.addEventListener('submit',function(e){
       e.preventDefault();
+      if(!me){setStatus('登录后才能保存。<a href="./login.html">登录</a> 或 <a href="./register.html">注册</a>',true);return;}
       var hex=/^#[0-9a-f]{6}$/i.test(f.hex.value)?f.hex.value.toLowerCase():'#d8d1c6';
-      var item=editing?Object.assign({},editing):{id:newId('u'),created:Date.now(),image:null};
+      var item=editing?Object.assign({},editing):{id:Store.newId('u'),created:Date.now(),image:null,original:null,tags:[]};
+      item.owner=me.id;
       item.name=(f.name.value.trim()||suggestedName()).slice(0,40);
       item.category=f.category.value;item.season=f.season.value;item.hex=hex;
-      item.color=(f.color.value.trim()||colorName(hex)).slice(0,12);
+      item.color=(f.color.value.trim()||colorName(hex)).slice(0,16);
       item.note=f.note.value.trim().slice(0,60);
-      if(pending)item.image=pending.blob;
+      /* 有白底单品图（且没有改选原图）时以它为主图，原图另存；否则直接用照片 */
+      if(pending){var cut=!!pending.cutout&&!pending.useRaw;item.image=cut?pending.cutout:pending.blob;item.original=cut?pending.blob:null;item.tags=pending.tags||[];}
       var wasEditing=!!editing,photo=pending;
       f.save.disabled=true;
-      dbPut('items',record(item)).then(function(){
-        if(photo){if(editing&&editing.src)URL.revokeObjectURL(editing.src);item.src=photo.url;pending=null;}
+      Store.put('items',record(item)).then(function(){
+        if(photo){if(editing)release(editing);item.src=URL.createObjectURL(item.image);}
         var at=mine.findIndex(function(i){return i.id===item.id;});
         if(at>=0)mine[at]=item;else mine.push(item);
         resetForm();
         source='mine';closetView='mine';
         refreshAll(true);askPersist();
-        setStatus((wasEditing?'已保存修改：':'已放进我的衣橱：')+'「'+esc(item.name)+'」，现在共 '+mine.length+' 件。<a href="#closet">去衣橱看看 ↓</a>'+(volatile?'<br>这个浏览器现在不能长期保存数据（可能是无痕窗口），关闭页面后会清空，记得导出备份。':''));
+        setStatus((wasEditing?'已保存修改：':'已放进'+esc(me.nickname)+'的衣橱：')+'「'+esc(item.name)+'」，现在共 '+mine.length+' 件。<a href="#closet">去衣橱看看 ↓</a>');
       },function(err){setStatus('保存失败：'+esc(err&&err.message||'浏览器拒绝了保存，可能是存储空间不足')+'。',true);}).then(function(){f.save.disabled=false;});
     });
   }
+  /* 第一次保存后请浏览器尽量不要自动清理这些数据 */
+  var persistAsked=false;
+  function askPersist(){if(!persistAsked&&navigator.storage&&navigator.storage.persist){persistAsked=true;navigator.storage.persist().catch(function(){});}}
 
   /* ---------- 02 看天穿衣：完整 App 的 outfit-plan.js 规则在浏览器内运行，用当前选中的衣橱 ---------- */
   var wState={season:'春季',temperature:18,weather:'晴',style:'极简',occasion:'日常通勤',variant:0};
@@ -406,7 +483,7 @@
       lastPlanKey=key;
       list.innerHTML=pieces.map(function(p){
         var item=p.item;
-        return '<li'+(p.gap?' class="gap"':'')+'><div class="result-visual"><span class="result-role">'+esc(p.gap?'待补':item.category)+'</span>'+visual(p.gap?null:item)+'</div><b title="'+esc(item.name)+'">'+esc(item.name)+'</b><small>'+(p.gap?esc(item.category)+' · '+taobao(item.name):sourceName())+'</small></li>';
+        return '<li'+(p.gap?' class="gap"':'')+'><div class="result-visual"><span class="result-role">'+esc(p.gap?'待补':item.category)+'</span>'+visual(p.gap?null:item)+'</div><b title="'+esc(item.name)+'">'+esc(item.name)+'</b><small>'+(p.gap?esc(item.category)+' · '+taobao(item.name):esc(sourceName()))+'</small></li>';
       }).join('');
       Array.from(list.children).forEach(function(el,n){animate(el,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:360,delay:n*45,easing:ease,fill:'backwards'});});
     }else if(variantTried){
@@ -449,6 +526,13 @@
     if(!select||!style||!tempRange)return;
     select.value=style;wState.style=style;wState.variant=0;
     renderWeather();scrollToEl($('weather'));
+  }
+  /* 登录后按个人档案里的第一个常穿风格设默认风格 */
+  function applyProfileStyle(){
+    var styles=me&&me.profile&&Array.isArray(me.profile.styles)?me.profile.styles:[],select=$('wStyle');
+    if(!select)return;
+    var options=Array.from(select.options).map(function(o){return o.value;}),first=styles.filter(function(s){return options.indexOf(s)>=0;})[0];
+    if(first){select.value=first;wState.style=first;}
   }
 
   /* ---------- 03 自己滑着搭：三行独立滑动（与完整 App 的三行相同：上装与外套、下装、鞋履），用当前选中的衣橱 ---------- */
@@ -543,10 +627,11 @@
       updateMix();rows.forEach(function(row){scrollRow(row,true);});
     });
     $('mixSave').addEventListener('click',function(){var c=climate();saveLook(picked(),(c?c.temperature+'°C · '+weatherNames[wState.weather]+' · ':'')+'自己搭',$('mixSave'));});
+    $('mixPoster').addEventListener('click',function(){var c=climate();exportPoster(picked(),(c?c.temperature+'°C · '+weatherNames[wState.weather]+' · ':'')+'自己搭',$('mixPoster'));});
     window.addEventListener('resize',function(){rows.forEach(function(row){var el=track(row);if(el)el.scrollLeft=choices[row.key]*width(el);});});
   }
 
-  /* ---------- 搭配收藏：只存单品编号和当时的名字；单品后来删掉了，也还能看到当时那一套叫什么 ---------- */
+  /* ---------- 搭配收藏：只存单品编号和当时的名字；单品后来删掉了，也还能看到当时那一套叫什么。需要登录 ---------- */
   function flashButton(button,text){
     if(!button)return;
     var label=button.lastChild;if(!label||label.nodeType!==3)return;
@@ -556,52 +641,103 @@
   }
   function saveLook(items,context,button){
     items=items.filter(Boolean);
+    if(!me){flashButton(button,'登录后才能收藏');closetNote('收藏需要先登录或注册');return;}
     if(!items.length){flashButton(button,'这一套还没有单品');return;}
-    var look={id:newId('l'),created:Date.now(),source:source,ids:items.map(function(i){return String(i.id);}),names:items.map(function(i){return i.name;}),context:context};
-    dbPut('looks',look).then(function(){
+    var look={id:Store.newId('l'),owner:me.id,created:Date.now(),source:source,ids:items.map(function(i){return String(i.id);}),names:items.map(function(i){return i.name;}),context:context};
+    Store.put('looks',look).then(function(){
       saved.unshift(look);renderCounts();askPersist();
       if(closetView==='saved')renderCloset(false);
       flashButton(button,'已收藏 ✓');
     },function(){flashButton(button,'收藏失败');});
   }
   function applyLook(look){
-    if(look.source!==source&&(look.source==='sample'||mine.length)){source=look.source;closetView=look.source;refreshAll(false);}
+    if(look.source!==source&&(look.source==='sample'||mine.length)){source=look.source;closetView=look.source==='mine'?'mine':'sample';refreshAll(false);}
     var items=look.ids.map(find).filter(Boolean);
     if(!items.length){closetNote('这套里的单品都已经删掉了');return;}
     items.forEach(function(item){selectItem(item.id,false);});
     scrollToEl($('mix'));
   }
 
-  /* ---------- 04 我的衣橱：我的衣橱 / 示例衣橱 / 搭配收藏；选哪个衣橱，看天穿衣和自己滑着搭就用哪个 ---------- */
+  /* ---------- 参考图：把一套搭配画成 1080×1350 的图片下载（与完整 App 的收藏参考板对应） ---------- */
+  function loadImage(src){return new Promise(function(resolve){var img=new Image();img.onload=function(){resolve(img);};img.onerror=function(){resolve(null);};img.src=src;});}
+  function srcOf(item){return item?(item.src||(item.photo?photoUrl(item):'')):'';}
+  /* items 是这一套的单品；已经删掉的单品传 {name} 占位，画成带名字的空格子 */
+  function exportPoster(items,context,button){
+    var list=items.filter(Boolean).slice(0,4);
+    if(!list.length){flashButton(button,'这一套还没有单品');return;}
+    flashButton(button,'正在生成…');
+    var W=1080,H=1350,canvas=doc.createElement('canvas');canvas.width=W;canvas.height=H;
+    var ctx=canvas.getContext('2d'),font='"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif',d=new Date();
+    /* 文字超出宽度时截断并加省略号 */
+    function fit(text,max){text=String(text||'');if(ctx.measureText(text).width<=max)return text;while(text.length>1&&ctx.measureText(text+'…').width>max)text=text.slice(0,-1);return text+'…';}
+    Promise.all(list.map(function(item){var s=srcOf(item);return s?loadImage(s):Promise.resolve(null);})).then(function(images){
+      ctx.fillStyle='#575234';ctx.fillRect(0,0,W,H);
+      function pill(text,x,y,size){ctx.font='600 '+size+'px '+font;var w=ctx.measureText(text).width+size*1.1,h=size*1.9;ctx.fillStyle='#fff';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,4);else ctx.rect(x,y,w,h);ctx.fill();ctx.fillStyle='#000';ctx.textBaseline='middle';ctx.fillText(text,x+size*.55,y+h/2+1);return w;}
+      pill('穿搭魔镜 WEAVE FIT',60,56,30);
+      var date=d.getFullYear()+'.'+two(d.getMonth()+1)+'.'+two(d.getDate());
+      ctx.font='600 30px '+font;pill(date,W-60-(ctx.measureText(date).width+33),56,30);
+      ctx.textBaseline='alphabetic';
+      ctx.fillStyle='#fff';ctx.font='600 66px '+font;ctx.fillText('今天这样穿',60,212);
+      ctx.font='600 30px '+font;ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillText(fit(context,W-120),60,262);
+      /* 一件放大居中；两到四件排成两列，每格下面写单品名，最下面留出署名 */
+      var cols=list.length>1?2:1,size=list.length>1?414:640,gap=24,rowH=size+52,startX=(W-(cols*size+(cols-1)*gap))/2,startY=300;
+      list.forEach(function(item,i){
+        var x=startX+(i%cols)*(size+gap),y=startY+Math.floor(i/cols)*(rowH+gap),img=images[i];
+        ctx.fillStyle='#fff';ctx.fillRect(x,y,size,size);
+        if(img){var s=Math.min(size/img.naturalWidth,size/img.naturalHeight),w=img.naturalWidth*s,h=img.naturalHeight*s;ctx.drawImage(img,x+(size-w)/2,y+(size-h)/2,w,h);}
+        else{ctx.fillStyle=item.hex||'#d8d1c6';ctx.globalAlpha=.35;ctx.fillRect(x,y,size,size);ctx.globalAlpha=1;}
+        ctx.fillStyle='#fff';ctx.font='600 26px '+font;ctx.fillText(fit(item.name,size),x,y+size+36);
+      });
+      ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='600 24px '+font;
+      ctx.fillText(fit((me?me.nickname+' · ':'')+'用已有的衣服，每天穿出新的一套。',W-120),60,H-50);
+      canvas.toBlob(function(blob){
+        if(!blob){flashButton(button,'生成失败');return;}
+        var url=URL.createObjectURL(blob),link=doc.createElement('a');
+        link.href=url;link.download='穿搭魔镜-参考图-'+d.getFullYear()+two(d.getMonth()+1)+two(d.getDate())+'.png';
+        doc.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);
+        flashButton(button,'已导出 ✓');
+      },'image/png');
+    });
+  }
+
+  /* ---------- 04 我的衣橱：我的衣橱 / 示例衣橱 / 搭配收藏 / 个人档案；选哪个衣橱，看天穿衣和自己滑着搭就用哪个 ---------- */
   var closetView='sample',closetFilter='全部',closetNoteTimer=null;
-  var closetPanel=$('closetPanel'),closetChips=$('closetChips'),closetGrid=$('closetGrid'),savedList=$('savedList'),closetEmpty=$('closetEmpty');
+  var closetPanel=$('closetPanel'),closetChips=$('closetChips'),closetGrid=$('closetGrid'),savedList=$('savedList'),closetEmpty=$('closetEmpty'),profilePane=$('profilePane');
   function renderCounts(){if($('mineCount'))$('mineCount').textContent=mine.length;if($('savedCount'))$('savedCount').textContent=saved.length;}
   function countText(list){var n=closetFilter==='全部'?list.length:list.filter(function(i){return i.category===closetFilter;}).length;return (closetFilter==='全部'?'共 ':closetFilter+' · ')+n+' 件';}
   function closetNote(text){var el=$('closetCount');if(!el)return;clearTimeout(closetNoteTimer);el.textContent=text;closetNoteTimer=setTimeout(function(){renderCloset(false);},2800);}
+  var loginPrompt='<a href="./login.html">登录</a>或<a href="./register.html">注册</a>一个本机账号后，';
   function renderCloset(fade){
     if(!closetPanel)return;
     clearTimeout(closetNoteTimer);
     Array.from(closetPanel.querySelectorAll('[data-view]')).forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.view===closetView));});
     renderCounts();
     var heading=$('closetHeading'),count=$('closetCount');
+    closetChips.hidden=true;closetGrid.hidden=true;savedList.hidden=true;closetEmpty.hidden=true;profilePane.hidden=true;
+    if(closetView==='profile'){
+      heading.textContent='个人档案';count.textContent=me?me.nickname:'未登录';
+      if(!me){closetEmpty.hidden=false;closetEmpty.innerHTML=loginPrompt+'这里可以填写身高、体重、肤色和常穿风格。';return;}
+      profilePane.hidden=false;fillProfile();return;
+    }
     if(closetView==='saved'){
       heading.textContent='搭配收藏';count.textContent='共 '+saved.length+' 套';
-      closetChips.hidden=true;closetGrid.hidden=true;savedList.hidden=!saved.length;
-      closetEmpty.hidden=!!saved.length;
+      if(!me){closetEmpty.hidden=false;closetEmpty.innerHTML=loginPrompt+'喜欢的整套就能收藏在这里。';return;}
+      savedList.hidden=!saved.length;closetEmpty.hidden=!!saved.length;
       closetEmpty.innerHTML='还没有收藏。在<a href="#weather">看天穿衣</a>或<a href="#mix">自己滑着搭</a>里点「收藏」，喜欢的整套就会出现在这里。';
       savedList.innerHTML=saved.map(function(look){
         var thumbs=look.ids.slice(0,4).map(function(id,i){var item=find(id);return '<span title="'+esc(item?item.name:look.names[i]||'')+'">'+visual(item)+'</span>';}).join('');
         var names=look.ids.map(function(id,i){var item=find(id);return item?item.name:(look.names[i]||'已删除的单品');}).join(' ＋ ');
         var when=new Date(look.created);
-        return '<li><div class="saved-thumbs">'+thumbs+'</div><p>'+esc(names)+'<small>'+esc(look.context)+' · '+(look.source==='mine'?'我的衣橱':'示例衣橱')+' · '+(when.getMonth()+1)+'月'+when.getDate()+'日</small></p><div class="saved-actions"><button type="button" data-apply="'+esc(look.id)+'">放进自己搭</button><button type="button" data-unsave="'+esc(look.id)+'">删除</button></div></li>';
+        return '<li><div class="saved-thumbs">'+thumbs+'</div><p>'+esc(names)+'<small>'+esc(look.context)+' · '+(look.source==='mine'?'我的衣橱':'示例衣橱')+' · '+(when.getMonth()+1)+'月'+when.getDate()+'日</small></p><div class="saved-actions"><button type="button" data-apply="'+esc(look.id)+'">放进自己搭</button><button type="button" data-poster="'+esc(look.id)+'">导出参考图</button><button type="button" data-unsave="'+esc(look.id)+'">删除</button></div></li>';
       }).join('');
       return;
     }
     var list=closetView==='mine'?mine:closet;
-    heading.textContent=closetView==='mine'?'我的衣橱':'示例衣橱';
+    heading.textContent=closetView==='mine'?(me?me.nickname+'的衣橱':'我的衣橱'):'示例衣橱';
+    if(closetView==='mine'&&!me){count.textContent='未登录';closetEmpty.hidden=false;closetEmpty.innerHTML=loginPrompt+'就能把自己的衣服拍进来。登录前可以先切到「示例衣橱」，把每个功能都试一遍。';return;}
     if(closetFilter!=='全部'&&!list.some(function(i){return i.category===closetFilter;}))closetFilter='全部';
     var cats=['全部'].concat(CATEGORIES.filter(function(cat){return list.some(function(i){return i.category===cat;});}));
-    closetChips.hidden=!list.length;savedList.hidden=true;closetGrid.hidden=false;
+    closetChips.hidden=!list.length;closetGrid.hidden=false;
     closetChips.innerHTML=cats.map(function(cat){var n=cat==='全部'?list.length:list.filter(function(i){return i.category===cat;}).length;return '<button type="button" data-cat="'+cat+'" aria-pressed="'+(cat===closetFilter)+'">'+cat+'<small>'+n+'</small></button>';}).join('');
     var shown=list.filter(function(i){return closetFilter==='全部'||i.category===closetFilter;});
     var add=closetView==='mine'?'<li class="add-tile"><button type="button" data-add aria-label="添加一件衣服"><span class="closet-tile">'+icon('i-plus')+'</span><b>添加一件</b><small>拍照或选图</small></button></li>':'';
@@ -634,24 +770,111 @@
       }
       var apply=e.target.closest('[data-apply]');
       if(apply){var look=saved.find(function(l){return l.id===apply.dataset.apply;});if(look)applyLook(look);return;}
+      var poster=e.target.closest('[data-poster]');
+      if(poster){var chosen=saved.find(function(l){return l.id===poster.dataset.poster;});if(chosen)exportPoster(chosen.ids.map(function(id,i){return find(id)||{name:chosen.names[i]||'已删除的单品'};}),chosen.context,poster);return;}
       var unsave=e.target.closest('[data-unsave]');
-      if(unsave){var id=unsave.dataset.unsave;dbDelete('looks',id).then(function(){saved=saved.filter(function(l){return l.id!==id;});renderCloset(false);},function(){closetNote('删除失败，请再试一次');});}
+      if(unsave){var id=unsave.dataset.unsave;Store.remove('looks',id).then(function(){saved=saved.filter(function(l){return l.id!==id;});renderCloset(false);},function(){closetNote('删除失败，请再试一次');});}
     });
   }
 
-  /* ---------- 备份：导出一个含照片的 JSON 文件；导入时逐项校验，同一编号的单品与收藏会被覆盖 ---------- */
+  /* ---------- 个人档案（与完整 App 的档案字段一致）与账号安全：修改密码、找回码、删除账号 ---------- */
+  var STYLES=['极简','通勤','学院','街头','复古','甜酷','轻熟','度假','田园复古','运动'];
+  var GENDERS=['未填写','女','男','不想说'],SHAPES=['未填写','偏瘦','匀称','梨形','苹果形','肩宽','丰满'],SKINS=['未填写','冷白皮','暖白皮','自然黄皮','小麦色','深肤色'],HAIRS=['未填写','自然黑','深棕','浅棕 / 亚麻','染浅色','其他'];
+  var pf={},faceDraft,meFaceUrl='';
+  function number(value,min,max){var n=Number(value);return value!==''&&value!=null&&Number.isFinite(n)&&n>=min&&n<=max?n:null;}
+  function oneOf(list,value){return list.indexOf(value)>=0?value:'未填写';}
+  /* 档案只保留已知字段和合法取值：表单保存与导入备份都经过这里 */
+  function cleanProfile(raw){
+    raw=raw&&typeof raw==='object'?raw:{};
+    return {gender:oneOf(GENDERS,raw.gender),height:number(raw.height,120,220),weight:number(raw.weight,30,180),shape:oneOf(SHAPES,raw.shape),skin:oneOf(SKINS,raw.skin),hair:oneOf(HAIRS,raw.hair),
+      styles:Array.isArray(raw.styles)?raw.styles.filter(function(s,i,all){return STYLES.indexOf(s)>=0&&all.indexOf(s)===i;}):[]};
+  }
+  /* 看天穿衣里的「我的参考」：面部参考照片 + 档案摘要（与完整 App 搭配页的参考卡对应） */
+  function renderMeRef(){
+    var box=$('meRef');if(!box)return;
+    var p=me&&me.profile||{},parts=[];
+    if(p.height)parts.push(p.height+' cm'+(p.weight?' / '+p.weight+' kg':''));
+    [p.shape,p.skin].forEach(function(v){if(v&&v!=='未填写')parts.push(v);});
+    if(p.hair&&p.hair!=='未填写')parts.push('发色 '+p.hair);
+    if(Array.isArray(p.styles)&&p.styles.length)parts.push('常穿 '+p.styles.join(' · '));
+    if(meFaceUrl){URL.revokeObjectURL(meFaceUrl);meFaceUrl='';}
+    box.hidden=!me||(!parts.length&&!me.face);
+    if(box.hidden)return;
+    if(me.face)meFaceUrl=URL.createObjectURL(me.face);
+    $('meFace').innerHTML=meFaceUrl?'<img src="'+meFaceUrl+'" alt="">':icon('i-user');
+    $('meText').textContent=me.nickname+'：'+(parts.join(' · ')||'在个人档案里补充身高、肤色和常穿风格');
+  }
+  function bmi(){var h=Number(pf.height.value),w=Number(pf.weight.value);pf.bmi.value=h>0&&w>0?(w/Math.pow(h/100,2)).toFixed(1):'填写身高体重后自动计算';}
+  function showFace(blob){if(pf.faceUrl)URL.revokeObjectURL(pf.faceUrl);pf.faceUrl=blob?URL.createObjectURL(blob):'';pf.facePreview.innerHTML=blob?'<img src="'+pf.faceUrl+'" alt="面部参考照片">':icon('i-user');pf.faceRemove.hidden=!blob;}
+  function fillProfile(){
+    if(!me||!profilePane)return;
+    var p=cleanProfile(me.profile);faceDraft=undefined;
+    pf.nickname.value=me.nickname;pf.gender.value=p.gender;pf.height.value=p.height||'';pf.weight.value=p.weight||'';
+    pf.shape.value=p.shape;pf.skin.value=p.skin;pf.hair.value=p.hair;bmi();
+    pf.styles.innerHTML=STYLES.map(function(s){return '<label><input type="checkbox" value="'+s+'"'+(p.styles.indexOf(s)>=0?' checked':'')+'><span>'+s+'</span></label>';}).join('');
+    showFace(me.face);pf.status.textContent='';pf.rcCode.hidden=true;
+  }
+  if(profilePane){
+    pf={form:$('profileForm'),nickname:$('pfNickname'),gender:$('pfGender'),height:$('pfHeight'),weight:$('pfWeight'),shape:$('pfShape'),skin:$('pfSkin'),hair:$('pfHair'),bmi:$('pfBmi'),styles:$('pfStyles'),face:$('pfFace'),facePreview:$('pfFacePreview'),faceRemove:$('pfFaceRemove'),status:$('pfStatus'),pwForm:$('passwordForm'),pwStatus:$('pwStatus'),rcForm:$('recoveryForm'),rcStatus:$('rcStatus'),rcCode:$('rcCode'),delForm:$('deleteForm'),delStatus:$('delStatus')};
+    pf.height.addEventListener('input',bmi);pf.weight.addEventListener('input',bmi);
+    pf.face.addEventListener('change',function(){
+      var file=pf.face.files&&pf.face.files[0];pf.face.value='';if(!file)return;
+      readPhoto(file,600).then(function(r){faceDraft=r.blob;showFace(r.blob);pf.status.textContent='面部参考照片已选好，保存档案后生效。';},function(err){pf.status.textContent=err.message;});
+    });
+    pf.faceRemove.addEventListener('click',function(){faceDraft=null;showFace(null);pf.status.textContent='保存档案后删除面部参考照片。';});
+    pf.form.addEventListener('submit',function(e){
+      e.preventDefault();if(!me)return;
+      if(pf.height.value&&number(pf.height.value,120,220)===null){pf.status.textContent='身高请填写 120–220 cm';return;}
+      if(pf.weight.value&&number(pf.weight.value,30,180)===null){pf.status.textContent='体重请填写 30–180 kg';return;}
+      var profile=cleanProfile({gender:pf.gender.value,height:pf.height.value,weight:pf.weight.value,shape:pf.shape.value,skin:pf.skin.value,hair:pf.hair.value,styles:Array.from(pf.styles.querySelectorAll('input:checked')).map(function(i){return i.value;})});
+      Store.saveProfile(me.id,profile,faceDraft,pf.nickname.value).then(function(person){
+        me=person;faceDraft=undefined;renderAccountUi();applyProfileStyle();refreshAll(false);pf.status.textContent='档案已保存。';
+      },function(err){pf.status.textContent=err.message||'保存失败';});
+    });
+    pf.pwForm.addEventListener('submit',function(e){
+      e.preventDefault();if(!me)return;
+      var current=$('pwCurrent').value,next=$('pwNew').value;
+      if(next!==$('pwConfirm').value){pf.pwStatus.textContent='两次输入的新密码不一样';return;}
+      pf.pwStatus.textContent='正在修改…';
+      Store.changePassword(me.id,current,next).then(function(){pf.pwForm.reset();pf.pwStatus.textContent='密码已修改，下次登录用新密码。';},function(err){pf.pwStatus.textContent=err.message||'修改失败';});
+    });
+    pf.rcForm.addEventListener('submit',function(e){
+      e.preventDefault();if(!me)return;
+      pf.rcStatus.textContent='正在生成…';pf.rcCode.hidden=true;
+      Store.renewRecoveryCode(me.id,$('rcPassword').value).then(function(code){
+        pf.rcForm.reset();pf.rcCode.textContent=code;pf.rcCode.hidden=false;
+        pf.rcStatus.textContent='新的找回码只显示这一次，请抄下或截图保存；旧的已经失效。';
+      },function(err){pf.rcStatus.textContent=err.message||'生成失败';});
+    });
+    var deleteArmedAccount=null;
+    pf.delForm.addEventListener('submit',function(e){
+      e.preventDefault();if(!me)return;
+      if(!deleteArmedAccount){pf.delStatus.textContent='会删除「'+me.nickname+'」的全部单品、收藏和档案，不能恢复。确认就再点一次「删除账号」。';deleteArmedAccount=setTimeout(function(){deleteArmedAccount=null;},6000);return;}
+      clearTimeout(deleteArmedAccount);deleteArmedAccount=null;
+      Store.deleteAccount(me.id,$('delPassword').value).then(function(){
+        me=null;mine.forEach(release);mine=[];saved=[];source='sample';closetView='sample';pf.delForm.reset();pf.delStatus.textContent='';
+        resetForm();refreshAll(false);renderAccountUi();closetNote('账号已删除');
+      },function(err){pf.delStatus.textContent=err.message||'删除失败';});
+    });
+  }
+
+  /* ---------- 备份：导出当前账号的单品（含照片）、收藏和档案为一个 JSON 文件；导入时逐项校验，归到当前账号 ---------- */
   function blobToDataUrl(blob){return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=function(){reject(reader.error);};reader.readAsDataURL(blob);});}
   function dataUrlToBlob(url){
     var m=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(url||'');
-    if(!m)return null;
+    if(!m||m[2].length>16e6)return null;
     try{var bin=atob(m[2]),bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Blob([bytes],{type:m[1]});}catch(e){return null;}
   }
+  function maybeUrl(blob){return blob?blobToDataUrl(blob):Promise.resolve(null);}
   if($('exportBackup'))$('exportBackup').addEventListener('click',function(){
+    if(!me){closetNote('登录后才能导出自己的备份');return;}
     if(!mine.length&&!saved.length){closetNote('还没有可以导出的衣服或收藏');return;}
-    Promise.all(mine.map(function(item){var copy=record(item);return item.image?blobToDataUrl(item.image).then(function(url){copy.image=url;return copy;}):Promise.resolve(copy);})).then(function(items){
-      var data={app:'weave-fit-web',version:1,exported:new Date().toISOString(),items:items,looks:saved};
+    Promise.all(mine.map(function(item){var copy=record(item);return Promise.all([maybeUrl(item.image),maybeUrl(item.original)]).then(function(urls){copy.image=urls[0];copy.original=urls[1];delete copy.owner;return copy;});})
+      .concat([maybeUrl(me.face)])).then(function(results){
+      var face=results.pop(),items=results;
+      var data={app:'weave-fit-web',version:2,exported:new Date().toISOString(),profile:{nickname:me.nickname,fields:me.profile||{},face:face},items:items,looks:saved.map(function(l){var c=Object.assign({},l);delete c.owner;return c;})};
       var blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),link=doc.createElement('a'),d=new Date();
-      link.href=url;link.download='穿搭魔镜-衣橱备份-'+d.getFullYear()+two(d.getMonth()+1)+two(d.getDate())+'.json';
+      link.href=url;link.download='穿搭魔镜-'+me.nickname+'-衣橱备份-'+d.getFullYear()+two(d.getMonth()+1)+two(d.getDate())+'.json';
       doc.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);
       closetNote('已导出 '+items.length+' 件衣服、'+saved.length+' 套收藏');
     },function(){closetNote('导出失败，请再试一次');});
@@ -660,20 +883,45 @@
   if(importInput)importInput.addEventListener('change',function(){
     var file=importInput.files&&importInput.files[0];importInput.value='';
     if(!file)return;
+    if(!me){closetNote('先登录，备份会导入到你的账号');return;}
     if(file.size>80*1024*1024){closetNote('备份文件太大，无法导入');return;}
+    var owner=me.id,items=[];
     file.text().then(function(text){return JSON.parse(text);}).then(function(data){
       if(!data||data.app!=='weave-fit-web'||!Array.isArray(data.items))throw new Error('这不是穿搭魔镜的备份文件');
-      var items=data.items.map(function(raw){var copy=Object.assign({},raw);copy.image=typeof raw.image==='string'?dataUrlToBlob(raw.image):null;return cleanItem(copy);}).filter(Boolean);
-      var looksIn=(Array.isArray(data.looks)?data.looks:[]).map(cleanLook).filter(Boolean);
-      return Promise.all(items.map(function(item){return dbPut('items',record(item));}).concat(looksIn.map(function(look){return dbPut('looks',look);}))).then(function(){
-        items.forEach(function(item){var at=mine.findIndex(function(i){return i.id===item.id;});if(at>=0){if(mine[at].src)URL.revokeObjectURL(mine[at].src);mine[at]=item;}else mine.push(item);});
-        looksIn.forEach(function(look){var at=saved.findIndex(function(l){return l.id===look.id;});if(at>=0)saved[at]=look;else saved.push(look);});
-        mine.sort(byCreated);saved.sort(byNewest);
-        if(mine.length){source='mine';closetView='mine';}
-        refreshAll(true);
-        closetNote('已导入 '+items.length+' 件衣服、'+looksIn.length+' 套收藏');
+      if(data.items.length>2000)throw new Error('备份里的单品太多');
+      return Promise.all([Store.all('items'),Store.all('looks')]).then(function(existing){
+        /* 编号已被这台设备上别的账号使用时（例如导入家人的备份）换一个新编号，不覆盖别人的数据；同一账号再次导入同一份备份则原地更新 */
+        var taken={},renamed={};
+        existing[0].concat(existing[1]).forEach(function(row){if(row&&row.owner!==owner)taken[row.id]=true;});
+        function ownId(id,prefix){if(!taken[id])return id;var next=Store.newId(prefix);taken[next]=true;return next;}
+        items=data.items.slice(0,2000).map(function(raw){
+          var copy=Object.assign({},raw);copy.image=typeof raw.image==='string'?dataUrlToBlob(raw.image):null;copy.original=typeof raw.original==='string'?dataUrlToBlob(raw.original):null;copy.owner=owner;
+          var item=cleanItem(copy);if(!item)return null;
+          var id=ownId(item.id,'u');if(id!==item.id){renamed[item.id]=id;item.id=id;}
+          return item;
+        }).filter(Boolean);
+        var looksIn=(Array.isArray(data.looks)?data.looks.slice(0,2000):[]).map(function(raw){
+          var look=cleanLook(raw);if(!look)return null;
+          look.owner=owner;look.id=ownId(look.id,'l');look.ids=look.ids.map(function(id){return renamed[id]||id;});
+          return look;
+        }).filter(Boolean);
+        /* 当前档案还是空的时候，顺便导入备份里的档案（不含密码） */
+        var profileIn=data.profile&&data.profile.fields&&typeof data.profile.fields==='object'&&!Object.keys(me.profile||{}).length?data.profile:null;
+        return Promise.all(items.map(function(item){return Store.put('items',record(item));}).concat(looksIn.map(function(look){return Store.put('looks',look);}))).then(function(){
+          if(profileIn){var face=typeof profileIn.face==='string'?dataUrlToBlob(profileIn.face):null;return Store.saveProfile(owner,cleanProfile(profileIn.fields),face).then(function(person){me=person;});}
+        }).then(function(){return {looksIn:looksIn,profileIn:profileIn};});
       });
-    }).catch(function(err){closetNote('导入失败：'+(err&&err.message&&!/JSON/.test(err.message)?err.message:'文件无法读取'));});
+    }).then(function(result){
+      var looksIn=result.looksIn,profileIn=result.profileIn;
+      /* 导入期间退出或换了账号：数据已经写进原账号，页面上不再显示 */
+      if(!me||me.id!==owner){items.forEach(release);return;}
+      items.forEach(function(item){var at=mine.findIndex(function(i){return i.id===item.id;});if(at>=0){release(mine[at]);mine[at]=item;}else mine.push(item);});
+      looksIn.forEach(function(look){var at=saved.findIndex(function(l){return l.id===look.id;});if(at>=0)saved[at]=look;else saved.push(look);});
+      mine.sort(byCreated);saved.sort(byNewest);
+      if(mine.length){source='mine';closetView='mine';}
+      renderAccountUi();refreshAll(true);
+      closetNote('已导入 '+items.length+' 件衣服、'+looksIn.length+' 套收藏'+(profileIn?'和个人档案':''));
+    }).catch(function(err){items.forEach(release);closetNote('导入失败：'+(err&&err.message&&!/JSON/.test(err.message)?err.message:'文件无法读取'));});
   });
 
   /* 衣橱换了来源或有增减：重建索引、三行滑动、规则搭配和衣橱面板 */
@@ -683,17 +931,28 @@
     if($('mixSource'))$('mixSource').textContent=sourceName();
     buildMix();renderWeather();renderCloset(fade);
   }
+  /* 读当前登录的账号与它的衣橱；登录 / 退出发生在别的标签页时也跟着刷新。多次触发时按顺序执行，避免两次读取互相覆盖 */
+  var syncing=Promise.resolve();
+  function syncAccount(){
+    syncing=syncing.catch(function(){}).then(function(){return loadAccount();}).then(function(){
+      source=mine.length?'mine':'sample';
+      closetView=me?(mine.length?'mine':closetView==='profile'?'profile':'sample'):(closetView==='saved'||closetView==='profile'?'sample':closetView);
+      applyProfileStyle();renderAccountUi();refreshAll(false);
+    });
+    return syncing;
+  }
 
-  /* ---------- 首次渲染：先用示例衣橱，读到本机保存的衣橱后再切过去 ---------- */
+  /* ---------- 首次渲染：先用示例衣橱，读到账号和它的衣橱后再切过去 ---------- */
+  renderAccountUi();
   refreshAll(false);
-  Promise.all([dbAll('items'),dbAll('looks')]).then(function(r){
-    mine=r[0].map(cleanItem).filter(Boolean).sort(byCreated);
-    saved=r[1].map(cleanLook).filter(Boolean).sort(byNewest);
-  },function(){volatile=true;}).then(function(){
-    if(mine.length){source='mine';closetView='mine';}
-    refreshAll(false);
-    if(volatile)setStatus('提示：这个浏览器现在不能长期保存数据（可能是无痕窗口），关闭页面后衣橱会清空；可以随时导出备份。');
-  });
+  syncAccount().then(function(){
+    var welcome=null;try{welcome=sessionStorage.getItem('weave-fit-welcome');sessionStorage.removeItem('weave-fit-welcome');}catch(e){}
+    if(welcome){closetNote(welcome);setStatus(esc(welcome)+(me&&!mine.length?' 在这里拍第一件衣服吧。':''));}
+    return Store.isVolatile();
+  }).then(function(volatile){
+    if(volatile)setStatus('提示：这个浏览器现在不能长期保存数据（可能是无痕窗口），关闭页面后账号和衣橱都会清空；可以随时导出备份。',true);
+  }).catch(function(){setStatus('读取这台设备上的衣橱失败，请刷新页面再试。',true);});
+  window.addEventListener('storage',function(e){if(e.key===null||e.key===Store.SESSION_KEY)syncAccount().catch(function(){});});
 
   /* ---------- 页脚：示例单品照片署名（Unsplash License 不强制署名，这里仍逐张注明摄影师与原图链接） ---------- */
   var credits=$('photoCredits');

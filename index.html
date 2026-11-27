@@ -5,19 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#575234">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="穿搭魔镜 Weave Fit：打开网页就能用的数字衣橱。拍照整理衣服，按温度、天气和场合从你已有的衣服里搭出一整套，也能三行滑动自己搭。不用下载安装，也不用注册，衣橱只保存在你自己的浏览器里。">
+  <!-- 只允许本站脚本和固定版本的识别库（jsDelivr）；识别模型从 Hugging Face 或国内镜像下载，WebAssembly 需要 wasm-unsafe-eval -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="description" content="穿搭魔镜 Weave Fit：打开网页就能用的数字衣橱。拍照自动抠图识别，按温度、天气和场合从你已有的衣服里搭出一整套，也能三行滑动自己搭。不用下载安装，账号和衣橱只保存在你自己的浏览器里。">
   <meta property="og:type" content="website">
   <meta property="og:title" content="穿搭魔镜 · Weave Fit —— 用已有的衣服，每天穿出新的一套">
-  <meta property="og:description" content="打开网页就能用的数字衣橱：拍照入橱、看天穿衣、自己滑着搭、收藏喜欢的一套。不用下载，不用安装，也不用注册。">
+  <meta property="og:description" content="打开网页就能用的数字衣橱：拍照入橱、看天穿衣、自己滑着搭、收藏和参考图。不用下载，不用安装，衣橱只留在你自己的设备上。">
   <title>穿搭魔镜 · Weave Fit</title>
   <link rel="icon" href="./outfit-independent/public/icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Inter Tight 600 只用于拉丁字母和数字；样式表不阻塞首屏，加载失败时回落到系统字体 -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&display=swap" media="print" onload="this.media='all'">
+  <!-- Inter Tight 600 只用于拉丁字母和数字；先按打印样式表加载、由脚本启用，不阻塞首屏，加载失败时回落到系统字体 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&display=swap" media="print" data-font>
   <link rel="stylesheet" href="./homepage/home.css">
   <script src="./outfit-independent/public/style-guide.js" defer></script>
   <script src="./outfit-independent/public/outfit-plan.js" defer></script>
+  <script src="./outfit-independent/public/garment-rules.js" defer></script>
+  <script src="./homepage/store.js" defer></script>
   <script src="./homepage/home.js" defer></script>
 </head>
 <body>
@@ -57,7 +61,10 @@
     </nav>
     <div class="header-group header-right">
       <a class="cell" href="#faq">常见问题</a>
-      <a class="cell cell-dark" href="#add">开始使用</a>
+      <a class="cell" href="./login.html" data-guest>登录</a>
+      <a class="cell cell-dark" href="./register.html" data-guest>注册</a>
+      <a class="cell member-cell" href="#closet" data-member data-member-name data-open-profile title="个人档案" hidden></a>
+      <button type="button" class="cell cell-dark" data-member data-logout hidden>退出</button>
       <button type="button" class="cell" id="menuToggle" aria-controls="mobileMenu" aria-expanded="false">菜单</button>
     </div>
   </header>
@@ -69,7 +76,10 @@
       <a class="cell" href="#styles">风格</a>
       <a class="cell" href="#closet">我的衣橱</a>
       <a class="cell" href="#faq">常见问题</a>
-      <a class="cell cell-dark" href="#add">开始使用</a>
+      <a class="cell" href="./login.html" data-guest>登录</a>
+      <a class="cell cell-dark" href="./register.html" data-guest>注册</a>
+      <a class="cell member-cell" href="#closet" data-member data-member-name data-open-profile hidden></a>
+      <button type="button" class="cell cell-dark" data-member data-logout hidden>退出登录</button>
     </nav>
   </div>
 
@@ -87,7 +97,7 @@
       <div id="bottomTitle">
         <h1 class="bottom-title-text" id="heroTitle">用已有的衣服，每天穿出新的一套。</h1>
       </div>
-      <p class="visually-hidden">穿搭魔镜 Weave Fit 是打开网页就能用的数字衣橱：拍照整理衣服，按温度、天气和场合从你已有的衣服里搭出一整套，也能三行滑动自己搭。不用下载安装，也不用注册。</p>
+      <p class="visually-hidden">穿搭魔镜 Weave Fit 是打开网页就能用的数字衣橱：拍照自动识别并整理衣服，按温度、天气和场合从你已有的衣服里搭出一整套，也能三行滑动自己搭。不用下载安装。</p>
       <div class="hero-spacer"></div>
     </section>
 
@@ -104,7 +114,7 @@
       </div>
       <div class="manifesto-text">
         <p>我们做一面魔镜 ⟡ 给每天早上站在衣柜前 ≠ 不知道穿什么的人 ∴ 答案往往就在已有的衣服里。</p>
-        <p>拍一张照片 ⊹ 认出主色 ⊹ 写好名称、类别和季节 ∿ 整个衣橱 ⟶ 一眼看清。</p>
+        <p>拍一张照片 ⊹ 抠出白底单品图 ⊹ 写好名称、类别和季节 ∿ 整个衣橱 ⟶ 一眼看清。</p>
         <p>先看温度 ⟡ 再挑衣服 ∴ 降温加外搭 ∧ 高温去厚针织 ∧ 雨雪天提醒带伞、换上防滑的鞋。</p>
         <p>上装 ↟ 下装 ◇ 鞋子 ⊹ 三行各自滑动 ∿ 魔镜只提醒 ≠ 不替你做决定。</p>
         <p>打开网页就能用 ✦ 照片和衣橱只留在你自己的设备上，每天出门都穿得像自己。</p>
@@ -145,27 +155,40 @@
         <div class="section-head reveal">
           <p class="index-cell">功能 · FEATURES</p>
           <h2 id="featuresTitle">从一张照片，到每天出门的一整套。</h2>
-          <p>打开网页就能用：不用下载，不用安装，也不用注册。你添加的衣服和收藏只保存在这台设备的浏览器里；还没添加时，先用一份示例衣橱试试每个功能。</p>
+          <p>打开网页就能用，不用下载，也不用安装。注册一个本机账号，衣服、收藏和个人档案就保存在这台设备的浏览器里；登录前，先用一份示例衣橱把每个功能都试一遍。</p>
         </div>
 
         <article class="feature-row" id="add" aria-labelledby="addTitle">
           <div class="feature-copy reveal">
             <p class="feature-kicker"><span>01</span>拍照入橱</p>
             <h3 id="addTitle">拍一张，放进你的衣橱。</h3>
-            <p>手机上直接拍照，电脑上选一张照片或把照片拖进来。网页会认出衣服的主色，你确认名称、类别和季节，就存进衣橱。照片在你的浏览器里处理，不会上传。</p>
+            <p>手机上直接拍照，电脑上选一张照片或把照片拖进来。网页在你的浏览器里抠出白底单品图，填好名称、类别、季节和主色，你确认后存进衣橱。照片不会上传。</p>
             <ul class="ticks">
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>自动取出主色，名称会跟着建议，都可以再改</li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>点「我的衣橱」里的单品，随时修改或删除</li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>没有照片也能只填文字，同样参与搭配</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>和完整 App 同一套识别模型与规则，填好的每一项都可以再改</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>第一次自动识别要下载约 140 MB 模型，之后直接识别</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>点「我的衣橱」里的单品随时修改；没有照片也能只填文字</li>
             </ul>
           </div>
           <div class="feature-visual reveal">
             <form class="item-form" id="itemForm" novalidate>
+              <p class="form-gate" id="formGate"><svg aria-hidden="true"><use href="#i-lock"/></svg><span><a href="./login.html">登录</a>或<a href="./register.html">注册</a>后，衣服才能存进你的衣橱。现在也可以先选一张照片，试试自动识别。</span></p>
               <label class="photo-drop" id="photoDrop">
                 <input type="file" id="itemPhoto" class="visually-hidden" accept="image/*">
                 <img class="photo-preview" id="itemPreview" alt="" hidden>
                 <span class="photo-hint" id="photoHint"><svg aria-hidden="true"><use href="#i-camera"/></svg><b>点这里拍照或选一张照片</b><small>电脑上也可以把照片直接拖进来</small></span>
               </label>
+              <div class="cut-switch" id="cutSwitch" role="group" aria-label="保存哪一张图" hidden>
+                <button type="button" data-cut="cut" aria-pressed="true">白底单品图</button>
+                <button type="button" data-cut="raw" aria-pressed="false">原图</button>
+              </div>
+              <div class="recog" id="recogBox" hidden>
+                <p class="recog-text" id="recogText" aria-live="polite"></p>
+                <div class="recog-progress" hidden><span id="recogBar"></span></div>
+                <div class="recog-actions" id="recogActions" hidden>
+                  <button type="button" class="button primary small" id="recogStart"><svg aria-hidden="true"><use href="#i-spark"/></svg>下载并自动识别</button>
+                  <button type="button" class="button ghost small" id="recogSkip">这次不用</button>
+                </div>
+              </div>
               <div class="form-grid">
                 <label class="span-2">名称<input id="itemName" maxlength="40" autocomplete="off" placeholder="例如：米白高领针织衫"></label>
                 <label>类别<select id="itemCategory"><option>上装</option><option>外套</option><option>下装</option><option>连衣裙</option><option>鞋履</option><option>包袋</option><option>配饰</option><option>其他</option></select></label>
@@ -214,8 +237,8 @@
                 </div>
               </fieldset>
               <div class="select-row">
-                <label>风格<select id="wStyle"><option>极简</option><option>通勤</option><option>学院</option><option>街头</option><option>复古</option><option>甜酷</option><option>运动</option></select></label>
-                <label>场合<select id="wOccasion"><option>日常通勤</option><option>约会</option><option>周末出行</option><option>旅行</option><option>面试</option></select></label>
+                <label>风格<select id="wStyle"><option>极简</option><option>通勤</option><option>学院</option><option>街头</option><option>复古</option><option>甜酷</option><option>轻熟</option><option>度假</option><option>田园复古</option><option>运动</option></select></label>
+                <label>场合<select id="wOccasion"><option>日常通勤</option><option>约会</option><option>朋友聚会</option><option>面试</option><option>周末出行</option><option>旅行</option><option>校园上课</option><option>运动</option><option>正式晚宴</option></select></label>
               </div>
               <p class="fine-print">季节按钮的温度只是参考，不是天气预报；按当天的实际温度拖动滑块即可。</p>
             </div>
@@ -226,6 +249,7 @@
                 <span class="wx-icon big" id="wIcon" aria-hidden="true"><svg><use href="#i-sun"/></svg></span>
                 <div><small>规则搭配 · <span id="wSource">示例衣橱</span></small><b id="wTitle" aria-live="polite">温和轻装 · 18°C</b></div>
               </div>
+              <div class="me-ref" id="meRef" hidden><span class="me-face" id="meFace"></span><p id="meText"></p></div>
               <p class="result-advice" id="wAdvice">正在准备规则搭配…</p>
               <ul class="result-list" id="wList"></ul>
               <ul class="result-tips" id="wTips"></ul>
@@ -246,11 +270,12 @@
             <ul class="ticks">
               <li><svg aria-hidden="true"><use href="#i-check"/></svg>手机上滑动，电脑上点箭头或用方向键</li>
               <li><svg aria-hidden="true"><use href="#i-check"/></svg>温度跟随上面「看天穿衣」的设定</li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>满意就收藏，在「搭配收藏」里随时翻出来</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>满意就收藏，或导出一张参考图发给朋友</li>
             </ul>
             <div class="mix-buttons">
               <button type="button" class="button primary small" id="mixShuffle"><svg aria-hidden="true"><use href="#i-shuffle"/></svg>随机一套</button>
               <button type="button" class="button ghost small" id="mixSave"><svg aria-hidden="true"><use href="#i-heart"/></svg>收藏这一套</button>
+              <button type="button" class="button ghost small" id="mixPoster"><svg aria-hidden="true"><use href="#i-backup"/></svg>导出参考图</button>
               <button type="button" class="button ghost small" id="mixReset">重新开始</button>
             </div>
           </div>
@@ -271,9 +296,11 @@
           <div class="feature-copy reveal">
             <p class="feature-kicker"><span>04</span>我的衣橱</p>
             <h3 id="closetTitle">衣橱里有什么，一目了然。</h3>
-            <p>按上装、外套、下装、连衣裙、鞋履、包袋、配饰等 8 个类别整理。左边切换我的衣橱、示例衣橱和搭配收藏：选哪个衣橱，上面的看天穿衣和自己滑着搭就用哪个。</p>
+            <p>按上装、外套、下装、连衣裙、鞋履、包袋、配饰等 8 个类别整理。左边切换我的衣橱、示例衣橱、搭配收藏和个人档案：选哪个衣橱，上面的看天穿衣和自己滑着搭就用哪个。</p>
             <ul class="ticks">
               <li><svg aria-hidden="true"><use href="#i-check"/></svg>点示例单品，直接放进「自己滑着搭」</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>收藏的整套可以导出成一张参考图</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>个人档案里填身高、肤色和常穿风格，看天穿衣默认用你的风格</li>
               <li><svg aria-hidden="true"><use href="#i-check"/></svg>导出备份文件，换手机或电脑后再导入</li>
             </ul>
           </div>
@@ -284,6 +311,7 @@
                   <button type="button" class="side-tab" data-view="mine" aria-pressed="false"><svg aria-hidden="true"><use href="#i-grid"/></svg>我的衣橱<small id="mineCount">0</small></button>
                   <button type="button" class="side-tab" data-view="sample" aria-pressed="true"><svg aria-hidden="true"><use href="#i-spark"/></svg>示例衣橱<small>18</small></button>
                   <button type="button" class="side-tab" data-view="saved" aria-pressed="false"><svg aria-hidden="true"><use href="#i-bookmark"/></svg>搭配收藏<small id="savedCount">0</small></button>
+                  <button type="button" class="side-tab" data-view="profile" aria-pressed="false"><svg aria-hidden="true"><use href="#i-user"/></svg>个人档案</button>
                 </div>
                 <div class="side-tools">
                   <button type="button" class="side-tool" id="exportBackup"><svg aria-hidden="true"><use href="#i-backup"/></svg>导出备份</button>
@@ -296,6 +324,58 @@
                 <ul class="closet-grid" id="closetGrid" aria-label="衣橱单品"></ul>
                 <ul class="saved-list" id="savedList" aria-label="搭配收藏" hidden></ul>
                 <p class="closet-empty" id="closetEmpty" hidden></p>
+                <div class="profile-pane" id="profilePane" hidden>
+                  <form class="profile-form" id="profileForm" novalidate>
+                    <div class="profile-face">
+                      <span class="face-preview" id="pfFacePreview"></span>
+                      <div class="face-tools">
+                        <label class="button ghost small">选一张面部参考照片<input type="file" id="pfFace" class="visually-hidden" accept="image/*"></label>
+                        <button type="button" class="button ghost small danger" id="pfFaceRemove" hidden>删除照片</button>
+                        <small>作为你自己的穿搭参考，显示在「看天穿衣」里；不会做人脸识别，只保存在这台设备上。</small>
+                      </div>
+                    </div>
+                    <div class="form-grid">
+                      <label>昵称<input id="pfNickname" maxlength="24" autocomplete="nickname"></label>
+                      <label>性别<select id="pfGender"><option>未填写</option><option>女</option><option>男</option><option>不想说</option></select></label>
+                      <label>身高（cm）<input id="pfHeight" type="number" min="120" max="220" inputmode="numeric" placeholder="168"></label>
+                      <label>体重（kg）<input id="pfWeight" type="number" min="30" max="180" step="0.5" inputmode="decimal" placeholder="55"></label>
+                      <label>身形特点<select id="pfShape"><option value="未填写">未填写</option><option value="偏瘦">偏瘦 / 骨架小</option><option value="匀称">匀称</option><option value="梨形">梨形（下半身较丰满）</option><option value="苹果形">苹果形（腰腹较圆）</option><option value="肩宽">肩宽 / 倒三角</option><option value="丰满">丰满</option></select></label>
+                      <label>肤色<select id="pfSkin"><option>未填写</option><option>冷白皮</option><option>暖白皮</option><option>自然黄皮</option><option>小麦色</option><option>深肤色</option></select></label>
+                      <label>发色<select id="pfHair"><option>未填写</option><option>自然黑</option><option>深棕</option><option>浅棕 / 亚麻</option><option>染浅色</option><option>其他</option></select></label>
+                      <label>BMI 参考<input id="pfBmi" readonly tabindex="-1"></label>
+                    </div>
+                    <fieldset class="pf-styles"><legend>常穿风格 <small>可多选；看天穿衣默认用排在最前的那个</small></legend><div class="style-chips" id="pfStyles"></div></fieldset>
+                    <div class="form-actions"><button type="submit" class="button primary small">保存档案</button></div>
+                    <p class="form-status" id="pfStatus" aria-live="polite"></p>
+                  </form>
+                  <details class="account-box">
+                    <summary>账号与安全</summary>
+                    <form class="mini-form" id="passwordForm" novalidate>
+                      <b>修改密码</b>
+                      <input type="password" id="pwCurrent" autocomplete="current-password" maxlength="200" placeholder="当前密码" aria-label="当前密码">
+                      <input type="password" id="pwNew" autocomplete="new-password" maxlength="200" placeholder="新密码（10–200 位）" aria-label="新密码">
+                      <input type="password" id="pwConfirm" autocomplete="new-password" maxlength="200" placeholder="再输入一次新密码" aria-label="再输入一次新密码">
+                      <button type="submit" class="button ghost small">修改密码</button>
+                      <p class="form-status" id="pwStatus" aria-live="polite"></p>
+                    </form>
+                    <form class="mini-form" id="recoveryForm" novalidate>
+                      <b>找回码</b>
+                      <small>忘记密码时，在登录页用它重设密码。找回码丢了就在这里换一个，旧的随即失效。</small>
+                      <input type="password" id="rcPassword" autocomplete="current-password" maxlength="200" placeholder="当前密码" aria-label="当前密码">
+                      <button type="submit" class="button ghost small">换一个新的找回码</button>
+                      <p class="recovery-code" id="rcCode" hidden></p>
+                      <p class="form-status" id="rcStatus" aria-live="polite"></p>
+                    </form>
+                    <form class="mini-form" id="deleteForm" novalidate>
+                      <b>删除账号</b>
+                      <small>连同这个账号的单品、收藏和档案一起删除，不能恢复。建议先导出备份。</small>
+                      <input type="password" id="delPassword" autocomplete="current-password" maxlength="200" placeholder="当前密码" aria-label="当前密码">
+                      <button type="submit" class="button ghost small danger">删除账号</button>
+                      <p class="form-status" id="delStatus" aria-live="polite"></p>
+                    </form>
+                    <button type="button" class="button ghost small" data-logout>退出登录</button>
+                  </details>
+                </div>
               </div>
             </div>
           </div>
@@ -304,11 +384,11 @@
         <div class="more" aria-labelledby="moreTitle">
           <h3 id="moreTitle" class="reveal">还有这些，让每天更省心</h3>
           <div class="more-grid">
-            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-heart"/></svg></span><h4>收藏喜欢的整套</h4><p>看天穿衣和自己滑着搭的结果都能一键收藏，出门前在「搭配收藏」里翻出来照着穿。</p></article>
+            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-heart"/></svg></span><h4>收藏与参考图</h4><p>看天穿衣和自己滑着搭的结果都能一键收藏，也能导出成一张参考图，出门前照着穿。</p></article>
             <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-cart"/></svg></span><h4>补齐缺的那一件</h4><p>衣橱缺什么就标出「待补」和款式建议，点一下去淘宝搜索这一款。</p></article>
-            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-backup"/></svg></span><h4>备份与换设备</h4><p>导出一个含照片的备份文件，在新手机或新电脑上打开网页导入，衣橱原样回来。</p></article>
-            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-phone"/></svg></span><h4>手机电脑都能用</h4><p>同一个网页：手机上直接拍照入橱，电脑上看大图慢慢挑。不用下载任何东西。</p></article>
-            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-user"/></svg></span><h4>不用注册账号</h4><p>打开就能用，不需要手机号和密码；衣橱只属于你这台设备上的这个浏览器。</p></article>
+            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-backup"/></svg></span><h4>备份与换设备</h4><p>导出一个含照片和档案的备份文件，在新手机或新电脑上登录后导入，衣橱原样回来。</p></article>
+            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-phone"/></svg></span><h4>手机电脑都能用</h4><p>同一个网页：手机上直接拍照入橱，电脑上看大图慢慢挑。不用下载任何 App。</p></article>
+            <article class="more-card reveal"><span class="more-icon"><svg aria-hidden="true"><use href="#i-user"/></svg></span><h4>一家人各用各的</h4><p>每人注册一个本机账号，衣橱、收藏和个人档案互不打扰；不需要手机号，也不需要邮箱。</p></article>
           </div>
         </div>
       </div>
@@ -320,19 +400,19 @@
           <div class="section-head">
             <p class="index-cell">隐私 · PRIVACY</p>
             <h2 id="privacyTitle">你的衣橱，只放在你自己的设备上。</h2>
-            <p>穿搭魔镜是一个静态网页：你添加的衣服、照片和收藏都保存在这台设备的浏览器里，本站不接收、也不保存任何个人数据。</p>
+            <p>穿搭魔镜是一个静态网页：你的账号、衣服、照片、收藏和个人档案都保存在这台设备的浏览器里，本站不接收、也不保存任何个人数据。</p>
           </div>
           <ul class="privacy-points">
-            <li><svg aria-hidden="true"><use href="#i-camera"/></svg><div><b>照片不离开你的设备</b><span>取主色、缩小尺寸都在你的浏览器里完成，不上传到任何服务器。</span></div></li>
-            <li><svg aria-hidden="true"><use href="#i-lock"/></svg><div><b>不用注册，也就没有账号可泄露</b><span>不收集手机号、邮箱和密码。</span></div></li>
-            <li><svg aria-hidden="true"><use href="#i-backup"/></svg><div><b>数据由你自己保管</b><span>清除浏览器的网站数据会清空衣橱，记得先导出一份备份。</span></div></li>
+            <li><svg aria-hidden="true"><use href="#i-camera"/></svg><div><b>照片不离开你的设备</b><span>抠图、识别、取主色都在你的浏览器里完成；识别模型只从网上下载一次，照片不上传到任何服务器。</span></div></li>
+            <li><svg aria-hidden="true"><use href="#i-lock"/></svg><div><b>账号只在这台设备上</b><span>不需要手机号和邮箱；密码只以加盐哈希保存在本机，用来区分家人、防止误操作。</span></div></li>
+            <li><svg aria-hidden="true"><use href="#i-backup"/></svg><div><b>数据由你自己保管</b><span>清除浏览器的网站数据会清空账号和衣橱，记得先导出一份备份。</span></div></li>
           </ul>
         </div>
         <div class="facts reveal" aria-label="穿搭魔镜的几个数字">
           <div class="fact"><b>6<small>档</small></b><span>温度分档，从 ≤5° 到 ≥29°</span></div>
           <div class="fact"><b>8<small>类</small></b><span>衣物类别，衣裤鞋包都能收</span></div>
           <div class="fact"><b>0<small>张</small></b><span>照片上传到服务器</span></div>
-          <div class="fact"><b>0<small>步</small></b><span>下载、安装或注册</span></div>
+          <div class="fact"><b>0<small>次</small></b><span>下载或安装 App</span></div>
         </div>
       </div>
     </section>
@@ -345,13 +425,15 @@
           <p>没找到答案？在 <a href="https://github.com/kakssjs/sister-yichu/issues" target="_blank" rel="noopener noreferrer">问题反馈</a> 里告诉我们。</p>
         </div>
         <div class="faq-list reveal">
-          <details open><summary>需要下载或安装什么吗？</summary><p>不需要。打开这个网页就能用，手机和电脑都可以，也不用注册账号。</p></details>
-          <details><summary>我的衣服保存在哪里？</summary><p>保存在你这台设备的浏览器里。换一个浏览器、换一台设备，或清除这个网站的数据，看到的都是空衣橱；需要时先在「我的衣橱」里导出备份，再到新设备上导入。</p></details>
-          <details><summary>我的照片会上传到网上吗？</summary><p>不会。照片在你的浏览器里缩小、取主色后直接保存在本机，本站没有接收数据的服务器。</p></details>
-          <details><summary>需要付费吗？</summary><p>不需要。整理衣橱、看天穿衣、自己滑着搭、收藏和备份都可以免费使用。</p></details>
+          <details open><summary>需要下载或安装什么吗？</summary><p>不需要安装任何 App。打开这个网页就能用，手机和电脑都可以。只有第一次使用自动识别时，浏览器会下载约 140 MB 的识别模型，之后留在浏览器缓存里，不用再下载；不想下载也可以手动填写。</p></details>
+          <details><summary>为什么要注册？账号存在哪里？</summary><p>注册是为了把你的衣橱和家人的分开。账号只建在这台设备的浏览器里，不需要手机号或邮箱，也不会上传；不登录时，可以用示例衣橱试遍所有功能。</p></details>
+          <details><summary>忘记密码怎么办？</summary><p>注册时网页会给你一个找回码，在登录页点「忘记密码」，用找回码就能重设密码。找回码丢了，可以在登录状态下到「个人档案 · 账号与安全」里换一个新的。</p></details>
+          <details><summary>我的衣服保存在哪里？</summary><p>保存在你这台设备的浏览器里。换一个浏览器、换一台设备，或清除这个网站的数据，看到的都是空衣橱；需要时先在「我的衣橱」里导出备份，再到新设备上登录后导入。</p></details>
+          <details><summary>我的照片会上传到网上吗？</summary><p>不会。抠图和识别都在你的浏览器里运行，照片和结果直接保存在本机，本站没有接收数据的服务器。</p></details>
+          <details><summary>需要付费吗？</summary><p>不需要。整理衣橱、自动识别、看天穿衣、自己滑着搭、收藏、参考图和备份都可以免费使用。</p></details>
           <details><summary>天气是自动获取的吗？</summary><p>目前不是。选择季节会先套用一个参考温度，再拖动滑块改成当天的实际温度即可；实际温度优先于季节名称。</p></details>
           <details><summary>一定要给每件衣服拍照吗？</summary><p>不用。可以只填写名称、类别、颜色和季节；没有照片的单品会显示成对应颜色的衣架，同样参与搭配。</p></details>
-          <details><summary>无痕模式能用吗？</summary><p>能用，但关闭窗口后浏览器会删掉这些数据。想长期保存，请用普通窗口打开，或随时导出备份。</p></details>
+          <details><summary>无痕模式能用吗？</summary><p>能用，但关闭窗口后浏览器会删掉账号和衣橱。想长期保存，请用普通窗口打开，或随时导出备份。</p></details>
         </div>
       </div>
     </section>
@@ -364,16 +446,18 @@
       </div>
       <div class="download-copy">
         <h2 id="startTitle">今天，就从自己的衣橱开始。</h2>
-        <p>打开网页就能用：不用下载，不用安装，也不用注册。</p>
+        <p>打开网页就能用，不用下载，也不用安装。</p>
       </div>
       <div class="download-actions">
-        <a class="cell cell-light" href="#add">添加第一件衣服 ⟶</a>
+        <a class="cell cell-light" href="./register.html" data-guest>注册，开一个自己的衣橱 ⟶</a>
+        <a class="cell cell-light" href="#add" data-member hidden>添加一件衣服 ⟶</a>
         <a class="cell cell-dark" href="#weather">先用示例衣橱试试</a>
       </div>
       <ol class="download-steps">
-        <li><b>01</b>拍几件最常穿的衣服</li>
-        <li><b>02</b>选好今天的温度和场合</li>
-        <li><b>03</b>收藏喜欢的那一套</li>
+        <li><b>01</b>注册一个本机账号</li>
+        <li><b>02</b>拍几件最常穿的衣服</li>
+        <li><b>03</b>选好今天的温度和场合</li>
+        <li><b>04</b>收藏喜欢的那一套</li>
       </ol>
     </section>
   </main>
@@ -390,9 +474,11 @@
         <a class="cell" href="#closet">我的衣橱</a>
         <a class="cell" href="#privacy">隐私</a>
         <a class="cell" href="#faq">常见问题</a>
+        <a class="cell" href="./login.html">登录</a>
+        <a class="cell" href="./register.html">注册</a>
         <a class="cell" href="https://github.com/kakssjs/sister-yichu" target="_blank" rel="noopener noreferrer">GitHub</a>
       </nav>
-      <p class="footer-note">人物形象照和拼贴里的单品图都是 AI 生成的风格示意，不是真实用户、在售商品或本人试穿效果；示例衣橱的单品照片来自 Unsplash（Unsplash License），只用来演示。你添加的衣服、照片和收藏只保存在你自己的浏览器里，本站不接收任何数据。</p>
+      <p class="footer-note">人物形象照、拼贴里的单品图和登录 / 注册页的背景照都是 AI 生成的风格示意，不是真实用户、在售商品或本人试穿效果；示例衣橱的单品照片来自 Unsplash（Unsplash License），只用来演示。自动识别使用开源模型 segformer_b2_clothes 与 CLIP（经 transformers.js 在你的浏览器里运行）。你的账号、衣服、照片和收藏只保存在你自己的浏览器里，本站不接收任何数据。</p>
       <details class="footer-credits">
         <summary>示例单品照片署名</summary>
         <ul id="photoCredits"></ul>

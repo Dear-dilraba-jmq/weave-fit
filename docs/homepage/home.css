@@ -72,6 +72,8 @@ a.cell-dark:hover{background:#fff;color:#000}
 .clock-cell,#mobileMenu [data-clock]{font-variant-numeric:tabular-nums}
 .center-cell:first-child{min-width:140px}
 #menuToggle{display:none!important}
+/* 登录后显示昵称，太长时截断 */
+.member-cell{display:inline-block;max-width:8em;overflow:hidden;text-overflow:ellipsis}
 
 /* 手机 / 平板菜单 */
 #mobileMenu{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;background:rgba(0,0,0,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);transition:opacity .4s var(--ease-out),background-color .4s var(--ease-out),-webkit-backdrop-filter .4s var(--ease-out),backdrop-filter .4s var(--ease-out)}
@@ -84,6 +86,7 @@ a.cell-dark:hover{background:#fff;color:#000}
 .mobile-menu-content .cell:nth-child(4){transition-delay:.12s}
 .mobile-menu-content .cell:nth-child(5){transition-delay:.16s}
 .mobile-menu-content .cell:nth-child(6){transition-delay:.2s}
+.mobile-menu-content .cell:nth-child(n+7){transition-delay:.24s}
 
 /* ---------- 首屏：固定全屏照片随滚动换装 + 底部大标题 ---------- */
 #background-wrapper{position:fixed;top:0;left:0;z-index:1;width:100%;height:100vh;overflow:hidden;background:#2b2a26}
@@ -200,6 +203,19 @@ a.cell-dark:hover{background:#fff;color:#000}
 .form-status{min-height:22px;margin-top:10px;color:var(--text-2);font-size:13px;line-height:1.6}
 .form-status.is-error{color:#9b2c1c}
 .form-status a{color:#000;font-weight:600;text-underline-offset:3px}
+/* 未登录提示、自动识别（征得同意 / 下载进度）、白底图与原图切换 */
+.form-gate{display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;padding:10px 12px;border-radius:3px;background:var(--tile);color:var(--ink-2);font-size:13px;line-height:1.6}
+.form-gate svg{flex:none;width:16px;height:16px;margin-top:3px}
+.form-gate a{color:#000;font-weight:600;text-underline-offset:3px}
+.cut-switch{display:flex;gap:6px;margin-top:8px}
+.cut-switch button{flex:1;min-height:34px;border:1px solid var(--line-2);border-radius:3px;background:#fff;font-size:12.5px;font-weight:600}
+.cut-switch button:hover{border-color:#000}
+.cut-switch button[aria-pressed="true"]{border-color:#000;background:#000;color:#fff}
+.recog{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:3px;background:var(--bg)}
+.recog-text{color:var(--ink-2);font-size:13px;line-height:1.6}
+.recog-progress{height:6px;margin-top:8px;overflow:hidden;border-radius:3px;background:var(--tile-2)}
+.recog-progress span{display:block;width:0;height:100%;background:#000;transition:width .3s var(--ease)}
+.recog-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 
 /* ---------- 02 / 03 的结果面板（网页面板，不是手机样机） ---------- */
 .app-panel{display:flex;flex-direction:column;width:min(100%,430px);min-height:620px;overflow:hidden;border-radius:3px;background:var(--surface);color:var(--ink);font-family:var(--sans);font-weight:400;font-size:13px;line-height:1.5}
@@ -218,6 +234,12 @@ button.app-btn.dark:hover{background:#000}
 .result-head small{display:block;color:var(--dim);font-size:11.5px}
 .result-head b{display:block;font-size:17px;line-height:1.3}
 .result-advice{flex:none;margin:2px 18px 0;padding:9px 11px;border-radius:3px;background:var(--bg);color:var(--ink-2);font-size:12.5px;line-height:1.6}
+/* 我的参考：面部参考照片 + 个人档案摘要 */
+.me-ref{display:flex;align-items:center;gap:10px;flex:none;margin:0 18px 8px;padding:7px 10px;border:1px solid var(--line);border-radius:3px}
+.me-face{display:grid;place-items:center;flex:none;width:34px;height:34px;overflow:hidden;border-radius:50%;background:var(--tile-2);color:var(--dim)}
+.me-face img{width:100%;height:100%;object-fit:cover}
+.me-face svg{width:20px;height:20px}
+.me-ref p{min-width:0;color:var(--ink-2);font-size:12px;line-height:1.45}
 .result-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:none;margin:12px 18px 0}
 .result-list li{min-width:0}
 .result-visual{position:relative;display:grid;place-items:center;aspect-ratio:1;overflow:hidden;border-radius:3px;background:var(--tile)}
@@ -324,6 +346,40 @@ button.app-btn.dark:hover{background:#000}
 .saved-actions{display:flex;gap:6px}
 .saved-actions button{flex:1;min-height:34px;border:1px solid var(--line-2);border-radius:3px;background:#fff;font-size:12.5px;font-weight:600}
 .saved-actions button:hover{border-color:#000}
+/* 个人档案与账号安全 */
+.profile-pane{margin-top:12px}
+.profile-face{display:flex;gap:12px;align-items:center}
+.face-preview{display:grid;place-items:center;flex:none;width:76px;height:76px;overflow:hidden;border-radius:50%;background:var(--tile);color:var(--dim)}
+.face-preview img{width:100%;height:100%;object-fit:cover}
+.face-preview svg{width:40px;height:40px}
+.face-tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.face-tools small{flex-basis:100%;color:var(--dim);font-size:11.5px;line-height:1.5}
+.face-tools label.button{cursor:pointer}
+.face-tools label.button:focus-within{outline:2.5px solid #000;outline-offset:2px}
+.profile-form .form-grid{margin-top:12px}
+.pf-styles{margin-top:12px;border:0}
+.pf-styles legend{margin-bottom:6px;color:var(--ink-2);font-size:13px;font-weight:600}
+.pf-styles legend small{color:var(--dim);font-weight:400}
+.style-chips{display:flex;flex-wrap:wrap;gap:6px}
+.style-chips label{position:relative}
+.style-chips input{position:absolute;opacity:0;pointer-events:none}
+.style-chips span{display:inline-block;padding:5px 11px;border:1px solid var(--line-2);border-radius:3px;background:#fff;color:var(--ink-2);font-size:12.5px;cursor:pointer}
+.style-chips span:hover{border-color:#000}
+.style-chips input:checked+span{border-color:#000;background:#000;color:#fff}
+.style-chips input:focus-visible+span{outline:2.5px solid #000;outline-offset:2px}
+.account-box{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}
+.account-box summary{padding:4px 0;font-size:13.5px;font-weight:600;cursor:pointer}
+.account-box>.button{margin-top:12px}
+.mini-form{display:grid;gap:6px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:3px}
+.mini-form b{font-size:13px}
+.mini-form small{color:var(--dim);font-size:11.5px;line-height:1.5}
+.mini-form input{min-height:38px;padding:0 10px;border:1px solid var(--line-2);border-radius:3px;background:#fff;font-size:14px;font-weight:400}
+.mini-form input:focus{border-color:#000;outline:none}
+.mini-form .button{justify-self:start}
+.mini-form .form-status{min-height:0;margin-top:0}
+/* 找回码（个人档案与登录 / 注册页共用） */
+.recovery-code{margin-top:12px;padding:14px;border:1.5px dashed var(--line-2);border-radius:3px;background:var(--tile);color:var(--ink);font:600 26px/1.2 var(--font);letter-spacing:.08em;text-align:center;font-variant-numeric:tabular-nums;-webkit-user-select:all;user-select:all}
+.mini-form .recovery-code{margin-top:0;font-size:22px}
 
 /* 更多功能 */
 .more{padding-top:96px;border-top:1px solid rgba(0,0,0,.12)}
@@ -390,6 +446,42 @@ button.app-btn.dark:hover{background:#000}
 .footer-credits a{color:var(--text-2);text-underline-offset:3px}
 .footer-credits a:hover{color:#000}
 
+/* ---------- 登录 / 注册页：全屏人物照 + 白色胶囊顶栏 + 左侧表单卡片 + 底部差值混合大标题（与首屏同一套版式） ---------- */
+.auth-page{min-height:100vh;background:#2b2a26}
+.auth-bg{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:68% 28%}
+.auth-main{position:relative;z-index:2;display:flex;align-items:center;min-height:100vh;padding:96px 24px 170px clamp(24px,6vw,110px)}
+.auth-card{width:min(100%,440px);padding:26px;border-radius:3px;background:rgba(255,255,255,.93);color:var(--ink);font-family:var(--sans);font-weight:400;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+@supports (backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px)){.auth-card{background:rgba(255,255,255,.84);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}}
+.auth-card .index-cell{margin-bottom:16px;background:var(--concrete);font-family:var(--font);font-weight:600}
+.auth-card h1{font:600 40px/1.08 var(--font);letter-spacing:-.03em}
+.auth-lead{margin-top:10px;color:var(--text-2);font-size:14.5px;line-height:1.7}
+.auth-people{margin-top:16px;border:0}
+.auth-people legend{margin-bottom:8px;color:var(--ink-2);font-size:13px;font-weight:600}
+.auth-people-list{display:flex;flex-wrap:wrap;gap:6px}
+.auth-person{position:relative}
+.auth-person input{position:absolute;opacity:0;pointer-events:none}
+.auth-person span{display:inline-block;max-width:16em;overflow:hidden;padding:8px 14px;border:1px solid var(--line-2);border-radius:3px;background:#fff;font-size:14px;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.auth-person span:hover{border-color:#000}
+.auth-person input:checked+span{border-color:#000;background:#000;color:#fff}
+.auth-person input:focus-visible+span{outline:2.5px solid #000;outline-offset:2px}
+.auth-empty{margin-top:16px;padding:12px;border-radius:3px;background:var(--tile);font-size:14px;line-height:1.7}
+.auth-empty a,.auth-switch a{color:#000;font-weight:600;text-underline-offset:3px}
+.auth-field{display:grid;gap:6px;margin-top:14px;color:var(--ink-2);font-size:13px;font-weight:600}
+.auth-field small{color:var(--dim);font-weight:400}
+/* 16px 字号：iOS 聚焦输入框时不自动放大页面 */
+.auth-field input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:3px;background:#fff;color:var(--ink);font-size:16px;font-weight:400}
+.auth-field input:focus{border-color:#000;outline:none}
+.auth-check{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--ink-2);font-size:13.5px}
+.auth-check input{width:16px;height:16px;accent-color:#000}
+.auth-submit{width:100%;min-height:46px;margin-top:18px}
+.auth-status{min-height:22px;margin-top:10px;color:var(--text-2);font-size:13px;line-height:1.6}
+.auth-status.is-error{color:#9b2c1c}
+.auth-switch{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;color:var(--ink-2);font-size:13.5px}
+.auth-link{padding:0;border:0;background:none;color:#000;font-size:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.auth-code-actions{display:flex;justify-content:center;margin-top:10px}
+.auth-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.65}
+.auth-title{position:fixed;left:14px;right:14px;bottom:12px;z-index:1;color:#fff;font-size:80px;font-weight:600;line-height:1.04;letter-spacing:-.015em;text-align:center;mix-blend-mode:difference;pointer-events:none}
+
 /* ---------- 内容出现动画（仅在脚本就绪后隐藏，避免无脚本时内容不可见） ---------- */
 .js-ready .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .js-ready .reveal.is-in{opacity:1;transform:none}
@@ -400,7 +492,9 @@ button.app-btn.dark:hover{background:#000}
 
 /* ---------- 响应式（断点沿用提示词：1200 / 1024 / 768 / 480） ---------- */
 @media (max-width:1200px){
-  .bottom-title-text{font-size:60px}
+  /* 顶栏右侧多了登录 / 注册：窄桌面上先收起时钟，导航和账号入口不挤出屏幕 */
+  .clock-cell{display:none}
+  .bottom-title-text,.auth-title{font-size:60px}
   .manifesto,.download{--pscale:.72}
   .manifesto-text p{font-size:50px}
   .more-grid{grid-template-columns:repeat(3,1fr)}
@@ -408,6 +502,8 @@ button.app-btn.dark:hover{background:#000}
 @media (max-width:1024px){
   .clock-cell,.header-center,.header-right .cell:not(#menuToggle){display:none}
   #menuToggle{display:inline-flex!important}
+  /* 登录 / 注册页没有菜单按钮，顶栏右侧的入口一直显示 */
+  .auth-page .header-right .cell:not(#menuToggle){display:inline-flex}
   #siteHeader .cell{padding:10px 14px;font-size:16px}
   .feature-row,.feature-row.reverse{grid-template-columns:1fr;gap:40px;padding:56px 0}
   .feature-row.reverse .feature-copy{order:0}
@@ -436,6 +532,12 @@ button.app-btn.dark:hover{background:#000}
   .download-actions .cell{flex:1 1 100%;font-size:18px}
   .faq summary{padding:20px 48px 20px 0;font-size:19px}
   .faq details p{padding-right:0;font-size:16px}
+  /* 手机上：照片对准人物，表单卡片在下方，大标题回到页面末尾 */
+  .auth-bg{object-position:80% 22%}
+  .auth-main{align-items:flex-end;padding:96px 16px 24px}
+  .auth-card{width:100%;padding:22px 18px}
+  .auth-card h1{font-size:32px}
+  .auth-title{position:relative;left:auto;right:auto;bottom:auto;z-index:2;padding:8px 16px 28px;font-size:40px}
 }
 @media (max-width:640px){
   .control-card{padding:16px}
@@ -443,7 +545,7 @@ button.app-btn.dark:hover{background:#000}
   .app-panel{min-height:580px}
   .closet-panel{grid-template-columns:1fr}
   .closet-side{flex-direction:column;gap:6px;padding:10px;border-right:0;border-bottom:1px solid var(--line)}
-  .side-tabs{grid-template-columns:repeat(3,1fr)}
+  .side-tabs{grid-template-columns:repeat(4,1fr)}
   .side-tab{flex-direction:column;gap:2px;padding:8px 4px;font-size:12px;text-align:center}
   .side-tab small{margin-left:0}
   .side-tools{grid-template-columns:1fr 1fr}
@@ -463,6 +565,9 @@ button.app-btn.dark:hover{background:#000}
   .form-grid{grid-template-columns:1fr}
   .result-actions{flex-wrap:wrap}
   .result-actions .app-btn.dark{flex-basis:100%}
+  .auth-page .header-right .cell:not(.cell-dark):not(#menuToggle){display:none}
+  .auth-title{font-size:32px}
+  .recovery-code{font-size:22px}
 }
 @media (max-width:380px){
   .download-copy h2{font-size:30px}

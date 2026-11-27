@@ -120,6 +120,34 @@ flowchart LR
 - 登录后签发 7 天有效的 HttpOnly 会话；修改密码后该账号所有会话失效。
 - 同一浏览器的另一个标签页切换账号时，`local-api.js` 会中止旧账号的请求；每个私有请求都带 `x-outfit-owner`，服务端发现账号不一致时返回 409，页面提示刷新。
 
+### 2.9 网页版（仓库根目录，浏览器里的同一套流程）
+
+网页版没有后台：账号、衣橱和识别都在访客自己的浏览器里，数据存在 IndexedDB `weave-fit-web`（`homepage/store.js`）。和完整 App 的对应关系：
+
+| 环节 | 网页版怎么做 | 与 App 的关系 |
+| --- | --- | --- |
+| 注册 / 登录 | `register.html`、`login.html`；昵称 1–24 字、密码 10–200 位，PBKDF2-SHA256（21 万次、随机盐）只存哈希；勾选「记住我」时会话存在 localStorage，否则关闭浏览器即退出 | App 用 SQLite 账号与 HttpOnly 会话；两边账号互不相通 |
+| 忘记密码 | 注册时显示一次找回码（12 位，只存哈希）；登录页「忘记密码？」用找回码设新密码并登录，用过的找回码作废、换发新的；登录后可在「个人档案 · 账号与安全」换一个找回码 | App 在本机终端运行 `npm run recover-account` |
+| 访客试用 | 不登录也能用示例衣橱试遍看天穿衣、自己滑着搭和自动识别；保存单品、收藏、档案和备份需要账号 | — |
+| 拍照入橱 | 选照片 → 缩小并取主色 → 首次征得同意后下载模型 → `recognize.js` 在浏览器里分割、抠白底图、识别款式 → 自动填写（手动改过的项不覆盖）→ 可改回原图 → 保存（白底图为主图，原图另存） | 同一份 `garment-rules.js`、同版本模型，识别结果与 App 一致 |
+| 看天穿衣 / 自己滑着搭 | `outfit-plan.js` 在浏览器里运行；登录后默认用档案里排在最前的常穿风格 | 与 App 的本地规则相同；网页版没有文字 AI |
+| 收藏与参考图 | 收藏只存单品编号和当时的名字；收藏和当前三行搭配都能画成 1080×1350 PNG 下载 | 对应 App 的收藏参考板 |
+| 个人档案 | 性别、身高、体重、身形、肤色、发色、常穿风格、面部参考照片；在看天穿衣里显示成「我的参考」 | 字段与 App 一致；网页版没有本人试穿 |
+| 备份 | 导出当前账号的单品（含白底图与原图）、收藏和档案（第 2 版 JSON）；导入到当前账号，逐项校验，编号与这台设备上别的账号冲突时换新编号，不覆盖别人的数据 | 格式与 App 的备份不同，两边不能互相导入 |
+| 删除账号 | 需要当前密码，点两次确认，连同这个账号的单品、收藏和档案一起删除 | — |
+
+```mermaid
+flowchart LR
+  A["选照片"] --> B["缩小 · 取主色"]
+  B --> C{"模型已在浏览器缓存？"}
+  C -->|否| D["说明约 140 MB<br/>访客同意后下载"]
+  C -->|是| E["加载模型"]
+  D --> E
+  E --> F["SegFormer 分割<br/>garment-rules.js 选大类、出白底图"]
+  F --> G["CLIP 视觉向量 × 预先算好的款式文字向量"]
+  G --> H["自动填写名称、类别、季节、主色<br/>白底图 / 原图可切换"]
+```
+
 ## 3. 开发工作流
 
 ### 3.1 准备环境
@@ -170,20 +198,22 @@ npm start                                # 或 node launch.cjs（显示局域网
 
 ### 3.5 项目主页开发
 
-1. 主页就是网页版，打开就能用：由 `index.html`、`homepage/home.css`、`homepage/home.js` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js` 和 `icon.svg`；照片都在 `homepage/photos/`，预览不需要联网（Inter Tight 字体加载失败时回落到系统字体）。访客的衣服和收藏存在浏览器 IndexedDB 的 `weave-fit-web` 数据库里，调试时可在开发者工具的「应用」面板查看或清空。
+1. 主页就是网页版，打开就能用：由 `index.html`、`login.html`、`register.html` 和 `homepage/` 下的 `home.css`、`home.js`、`store.js`、`account.js`、`recognize.js`、`clip-type-vectors.json` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js`、`garment-rules.js` 和 `icon.svg`；照片都在 `homepage/photos/`，除自动识别外预览不需要联网（Inter Tight 字体加载失败时回落到系统字体）。账号、衣服、收藏和档案存在浏览器 IndexedDB 的 `weave-fit-web` 数据库里，识别模型在 Cache Storage 的 `transformers-cache` 里，调试时可在开发者工具的「应用」面板查看或清空。
 2. 在仓库根目录启动静态服务器预览：
 
    ```sh
    python -m http.server 8765
    ```
 
-   打开 `http://127.0.0.1:8765/`。用静态服务器预览最接近 Pages 的实际环境。
-3. 至少检查：桌面、768px 平板与 360px 手机宽度没有横向滚动；首屏随滚动换装、底部标题淡出、宣言区视差、风格卡展开与切换正常；拍照入橱添加（含照片和不含照片）、修改、删除，刷新后数据仍在；看天穿衣的各项设定与「换一套」「收藏」「拿去自己调整」、三行滑动与随机、三种衣橱切换、搭配收藏、导出与导入备份都能使用；系统开启「减少动态效果」时没有视差、模糊和位移；控制台没有报错。
-4. 示例单品只写在 `home.js` 的 `closet` 数组里；访客的数据只在访客自己的浏览器里，页面不向任何地址发送数据。
-5. 主页的三类照片：
-   - 人物形象照 `look-*.webp`（首屏与风格卡）由用户提供，拼贴单品图 `piece-*.webp` 由 Figma AI 按提示词生成（透明背景，只裁掉四周空白、按显示尺寸的 2 倍缩小，不从人物照片里抠图）。两类都是 AI 生成的风格示意，页脚已注明；替换时保持同样的说明。
+   打开 `http://127.0.0.1:8765/`。用静态服务器预览最接近 Pages 的实际环境；账号需要安全来源，必须用 `127.0.0.1` / `localhost` 或 HTTPS 打开，局域网 IP 的 http 地址会提示账号功能不可用。
+3. 至少检查：桌面、768px 平板与 360px 手机宽度没有横向滚动；首屏随滚动换装、底部标题淡出、宣言区视差、风格卡展开与切换正常；注册（找回码只显示一次）、登录、密码错误、忘记密码、修改密码、换找回码、删除账号、退出都能使用；访客能试用示例衣橱，保存时提示登录；拍照入橱添加（自动识别、白底图 / 原图切换、不含照片）、修改、删除，刷新后数据仍在；看天穿衣的各项设定与「换一套」「收藏」「拿去自己调整」、三行滑动与随机、四个衣橱标签、搭配收藏、参考图、个人档案、导出与导入备份都能使用；系统开启「减少动态效果」时没有视差、模糊和位移；控制台没有报错，也没有内容安全策略（CSP）违规。
+4. 示例单品只写在 `home.js` 的 `closet` 数组里；访客的数据只在访客自己的浏览器里，页面不向任何地址发送数据（自动识别只从固定的地址下载模型和推理库）。
+5. 页面的内容安全策略写在三个 HTML 的 `<meta http-equiv="Content-Security-Policy">` 里：脚本只允许本站和 jsDelivr（识别库），不允许内联脚本和内联事件（字体样式表由脚本启用）。新增外部资源时先改这里，否则浏览器会拦截。
+6. 识别规则改在 `outfit-independent/public/garment-rules.js`，App 与网页版同时生效；改了款式表（`types`）的英文描述或增删款式后，在 `outfit-independent/` 中运行 `node scripts/export-type-vectors.cjs`（需要本机 CLIP 模型）重新生成 `homepage/clip-type-vectors.json`。模型版本固定在 `recognize.js` 和 App 的 `setup-*` 脚本里，升级时两边一起改。
+7. 网页版的照片：
+   - 人物形象照 `look-*.webp`（首屏与风格卡）和登录 / 注册页背景 `auth-*.webp` 由用户提供，拼贴单品图 `piece-*.webp` 由 Figma AI 按提示词生成（透明背景，只裁掉四周空白、按显示尺寸的 2 倍缩小，不从人物照片里抠图）。这些都是 AI 生成的风格示意，页脚已注明；替换时保持同样的说明。
    - 示例衣橱的单品照片按下面的规则替换或新增。
-6. 替换或新增示例衣橱照片：
+8. 替换或新增示例衣橱照片：
    - 只用 Unsplash 免费图库的照片（Unsplash License）。不用 Unsplash+ 付费图、电商或品牌商品图、带明显品牌标识的图，也不用 AI 生成或程序绘制的衣服。
    - 优先选单件完整入镜、背景干净、光线自然的照片，整体保持中性色调，和现有单品放在一起要协调。
    - 在 `closet` 中填写 `photo`（地址里 `photo-` 后面的编号）、`page`（原图页面地址 `unsplash.com/photos/` 后面的部分）和 `by`（摄影师）；同框有其他衣服时用 `rect`（原图像素 x,y,宽,高）裁掉。名称、类别、颜色、季节按照片如实填写，季节取值与 App 单品表单一致。
@@ -194,12 +224,12 @@ npm start                                # 或 node launch.cjs（显示局域网
 
 ```sh
 node scripts/build-pages.cjs
-git add index.html homepage docs
+git add index.html login.html register.html homepage docs
 git commit -m "Update project homepage"
 git push
 ```
 
-- `build-pages.cjs` 会重建 `docs/homepage/` 和 `docs/outfit-independent/`，复制主页及其依赖的公开脚本，并写入 `.nojekyll`；`docs/` 中的其他文件保持不变。
+- `build-pages.cjs` 会重建 `docs/homepage/` 和 `docs/outfit-independent/`，复制三个页面及其依赖的脚本、款式向量与照片，并写入 `.nojekyll`；`docs/` 中的其他文件保持不变。
 - 仓库 Settings → Pages 选择 Deploy from a branch，分支 `main`，目录 `/docs`。
 - 发布目录不包含 `data/`、`.env`、模型或任何个人照片。
 - `homepage/photos/` 中的示例照片会一并复制到 `docs/homepage/photos/`，页面不依赖外部图床。
@@ -214,7 +244,8 @@ git push
 - [ ] `git status` 和 `git diff` 已逐项审查，没有混入无关改动
 - [ ] 提交中没有 `data/`、`.env`、`*.sqlite`、`models/`、`node_modules/`、日志或个人照片
 - [ ] 改动了后台或规则：`npm test` 通过；改动了界面：`npm run test:all` 通过
-- [ ] 改动了主页：已在浏览器检查桌面与手机宽度，并运行 `node scripts/build-pages.cjs`
+- [ ] 改动了主页或登录 / 注册页：已在浏览器检查桌面与手机宽度、控制台没有报错和 CSP 违规，并运行 `node scripts/build-pages.cjs`
+- [ ] 改动了 `garment-rules.js`：`npm test` 通过；改了款式表时已重新生成 `clip-type-vectors.json`
 - [ ] 改动了示例照片：来源是 Unsplash 免费图库，照片已存入 `homepage/photos/`，`page` 与 `by` 已填写，页脚署名正确
 - [ ] 需要时已更新版本号与 `sw.js` 缓存名
 - [ ] README、WORKFLOW、TECHNICAL_OUTLINE 中受影响的描述已同步；本轮改动、验证结果和遗留问题已记入 WORK.md
