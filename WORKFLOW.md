@@ -1,6 +1,6 @@
 # 工作流程 · Weave Fit
 
-本文说明三件事：用户怎样使用穿搭魔镜，每个核心功能在浏览器与本机后台之间怎样流转，开发者怎样修改、检查和发布。模块职责、数据表、接口参数与安全设计见 [TECHNICAL_OUTLINE.md](TECHNICAL_OUTLINE.md)。
+本文说明三件事：用户怎样使用穿搭魔镜，每个核心功能在浏览器与本机后台之间怎样流转，开发者怎样修改、检查和发布。模块职责、数据表、接口参数与安全设计见 [TECHNICAL_OUTLINE.md](TECHNICAL_OUTLINE.md)；每轮迭代的依据、改动、验证结果和待办记在 [WORK.md](WORK.md)。
 
 ## 1. 用户旅程
 
@@ -142,8 +142,8 @@ npm start                                # 或 node launch.cjs（显示局域网
 | --- | --- | --- |
 | 温度 / 季节 / 场合规则 | `outfit-independent/public/outfit-plan.js` | 后台 `outfit-service.cjs`、App 前端、项目主页 |
 | 风格词库与搭配风格 | `outfit-independent/public/style-guide.js` | 规则引擎、App、主页 |
-| 单品颜色、轮廓示意、搭配板 | `outfit-independent/public/look-reference.js` | App、主页（待补单品） |
-| 主页面料质感渲染 | `homepage/fabric.js` | 仅项目主页 |
+| 单品颜色、轮廓示意、搭配板 | `outfit-independent/public/look-reference.js` | App（参考图、海报、待补单品） |
+| 主页示例衣橱、照片来源与署名 | `homepage/home.js` 的 `closet` 数组 | 仅项目主页 |
 | 记录字段校验与衣物类别 | `outfit-independent/validation.cjs` | 后台接口 |
 
 - 不要在主页或其他文件复制一份规则；规则改动同时影响后台、App 和主页，改后运行 `npm test` 并打开主页确认。
@@ -170,7 +170,7 @@ npm start                                # 或 node launch.cjs（显示局域网
 
 ### 3.5 项目主页开发
 
-1. 主页由 `index.html`、`homepage/home.css`、`homepage/home.js`、`homepage/fabric.js` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js`、`look-reference.js` 和 `icon.svg`。
+1. 主页由 `index.html`、`homepage/home.css`、`homepage/home.js` 组成，并加载 App 的 `style-guide.js`、`outfit-plan.js` 和 `icon.svg`；示例照片在 `homepage/photos/`，预览不需要联网。
 2. 在仓库根目录启动静态服务器预览：
 
    ```sh
@@ -178,8 +178,15 @@ npm start                                # 或 node launch.cjs（显示局域网
    ```
 
    打开 `http://127.0.0.1:8765/`。用静态服务器预览最接近 Pages 的实际环境。
-3. 至少检查：桌面宽度与 375px 手机宽度没有横向滚动；开柜动画、点选单品放进魔镜、三行滑动、温度预报都能使用；系统开启「减少动态效果」时动画收敛；控制台没有报错。
-4. 示例单品只写在 `home.js` 的示例衣橱里，主页不读取任何个人数据。
+3. 至少检查：桌面、768px 平板与 375px 手机宽度没有横向滚动；首屏天气轮播与手动切换、拍照入橱「换一张」、看天穿衣的各项设定与「换一套」「拿去自己调整」、三行滑动与随机、衣橱筛选都能使用，所有照片正常显示；系统开启「减少动态效果」时首屏不自动轮播、动画收敛；控制台没有报错。
+4. 示例单品只写在 `home.js` 的 `closet` 数组里，主页不读取任何个人数据。
+5. 替换或新增示例照片：
+   - 只用 Unsplash 免费图库的照片（Unsplash License）。不用 Unsplash+ 付费图、电商或品牌商品图、带明显品牌标识的图，也不用 AI 生成或程序绘制的衣服。
+   - 优先选单件完整入镜、背景干净、光线自然的照片，整体保持中性色调，和现有单品放在一起要协调。
+   - 在 `closet` 中填写 `photo`（地址里 `photo-` 后面的编号）、`page`（原图页面地址 `unsplash.com/photos/` 后面的部分）和 `by`（摄影师）；同框有其他衣服时用 `rect`（原图像素 x,y,宽,高）裁掉。名称、类别、颜色、季节按照片如实填写，季节取值与 App 单品表单一致。
+   - 把照片下载到 `homepage/photos/`，文件名用两位单品编号。缩略图 `item-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=480&h=480&fit=crop&fm=jpg&q=72`，有 `rect` 时在 `?` 后加 `rect=<rect>&`；拍照入橱用图 `scan-编号.jpg` 取 `https://images.unsplash.com/photo-<photo>?w=960&fm=jpg&q=72`，不裁切，保持原图宽高比。例如 `curl -fsSL -o homepage/photos/item-19.jpg "<地址>"`（Windows PowerShell 中写 `curl.exe`）。
+   - 用于拍照入橱演示的单品（`scanIds`）还要填 `size`（原图宽高）和 `box`（衣物区域，占原图宽高的百分比），改完逐张确认框线贴住衣物。
+   - 页脚署名由 `closet` 自动生成，不需要另外维护。
 
 ### 3.6 发布 GitHub Pages
 
@@ -193,6 +200,7 @@ git push
 - `build-pages.cjs` 会重建 `docs/homepage/` 和 `docs/outfit-independent/`，复制主页及其依赖的公开脚本，并写入 `.nojekyll`；`docs/` 中的其他文件保持不变。
 - 仓库 Settings → Pages 选择 Deploy from a branch，分支 `main`，目录 `/docs`。
 - 发布目录不包含 `data/`、`.env`、模型或任何个人照片。
+- `homepage/photos/` 中的示例照片会一并复制到 `docs/homepage/photos/`，页面不依赖外部图床。
 
 ### 3.7 版本号与缓存
 
@@ -205,8 +213,9 @@ git push
 - [ ] 提交中没有 `data/`、`.env`、`*.sqlite`、`models/`、`node_modules/`、日志或个人照片
 - [ ] 改动了后台或规则：`npm test` 通过；改动了界面：`npm run test:all` 通过
 - [ ] 改动了主页：已在浏览器检查桌面与手机宽度，并运行 `node scripts/build-pages.cjs`
+- [ ] 改动了示例照片：来源是 Unsplash 免费图库，照片已存入 `homepage/photos/`，`page` 与 `by` 已填写，页脚署名正确
 - [ ] 需要时已更新版本号与 `sw.js` 缓存名
-- [ ] README、WORKFLOW、TECHNICAL_OUTLINE 中受影响的描述已同步
+- [ ] README、WORKFLOW、TECHNICAL_OUTLINE 中受影响的描述已同步；本轮改动、验证结果和遗留问题已记入 WORK.md
 
 ## 4. 数据与密钥规则
 
