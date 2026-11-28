@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#575234">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="description" content="登录穿搭魔镜：选择这台设备上的账号，回到自己的衣橱、收藏和个人档案。">
+  <title>登录 · 穿搭魔镜 Weave Fit</title>
+  <link rel="icon" href="./outfit-independent/public/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&display=swap" media="print" data-font>
+  <link rel="stylesheet" href="./homepage/home.css">
+  <script src="./homepage/store.js" defer></script>
+  <script src="./homepage/account.js" defer></script>
+</head>
+<body class="auth-page" data-page="login">
+  <a class="skip" href="#authForm">跳到登录表单</a>
+  <img class="auth-bg" src="homepage/photos/auth-login.webp" alt="" width="1672" height="941" fetchpriority="high" aria-hidden="true">
+  <header id="siteHeader">
+    <div class="header-group header-left">
+      <a class="cell" href="./index.html">穿搭魔镜 <small>WEAVE FIT</small></a>
+    </div>
+    <div class="header-group header-right">
+      <a class="cell" href="./index.html#weather">先看看示例衣橱</a>
+      <a class="cell cell-dark" href="./register.html">注册</a>
+    </div>
+  </header>
+  <main class="auth-main" id="main">
+    <form class="auth-card" id="authForm" novalidate aria-labelledby="authTitle">
+      <p class="index-cell">登录 · SIGN IN</p>
+      <h1 id="authTitle">回到你的衣橱</h1>
+      <p class="auth-lead">选择这台设备上的账号，输入密码。</p>
+      <fieldset class="auth-people" id="peopleField">
+        <legend>账号</legend>
+        <div class="auth-people-list" id="peopleList"></div>
+      </fieldset>
+      <p class="auth-empty" id="noPeople" hidden>这台设备上还没有账号。<a href="./register.html">注册一个</a>，一分钟就好。</p>
+      <label class="auth-field">密码<input type="password" id="password" autocomplete="current-password" maxlength="200" required></label>
+      <label class="auth-check"><input type="checkbox" id="remember" checked>在这台设备上记住我</label>
+      <button type="submit" class="button primary auth-submit" id="submit">登录</button>
+      <p class="auth-status" id="status" role="status" aria-live="polite"></p>
+      <p class="auth-switch"><button type="button" class="auth-link" id="forgotLink">忘记密码？</button><span>还没有账号？<a href="./register.html">注册一个</a></span></p>
+      <p class="auth-note">账号和衣橱只保存在这台设备的浏览器里，不会上传。不在自己的设备上时，取消勾选「记住我」，关闭浏览器就会退出。</p>
+    </form>
+    <form class="auth-card" id="resetForm" novalidate hidden aria-labelledby="resetTitle">
+      <p class="index-cell">找回 · RESET</p>
+      <h1 id="resetTitle">用找回码重设密码</h1>
+      <p class="auth-lead" id="resetLead">注册时网页给过你一个找回码，形如 ABCD-EFGH-JKMN。</p>
+      <label class="auth-field">找回码<input id="resetCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="XXXX-XXXX-XXXX" required></label>
+      <label class="auth-field">新密码 <small>10–200 位</small><input type="password" id="resetPassword" autocomplete="new-password" minlength="10" maxlength="200" required></label>
+      <label class="auth-field">再输入一次新密码<input type="password" id="resetConfirm" autocomplete="new-password" minlength="10" maxlength="200" required></label>
+      <button type="submit" class="button primary auth-submit" id="resetSubmit">重设密码并登录</button>
+      <p class="auth-status" id="resetStatus" role="status" aria-live="polite"></p>
+      <p class="auth-switch"><button type="button" class="auth-link" id="backToLogin">想起来了，回去登录</button></p>
+      <p class="auth-note">找回码也丢了？数据只在这台设备上，网页没有办法替你找回密码，只能换个昵称重新注册；家人的账号不受影响。</p>
+    </form>
+  </main>
+  <p class="auth-title" aria-hidden="true">欢迎回来。</p>
+</body>
+</html>

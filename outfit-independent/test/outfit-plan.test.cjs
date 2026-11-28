@@ -71,6 +71,25 @@ test('reference style retains preppy details but adapts layers, skirts and rain 
  const rain=suggest([{id:1,category:'鞋履',name:'白色帆布鞋'}],[],{temperature:25,weather:'小雨'});assert.equal(rain.items.length,0);assert.ok(rain.gaps.some(i=>/雨伞/.test(i.name)));
  assert.equal(climateFor({season:'夏季',temperature:5}).band,0);
 });
+test('rainy or snowy weather prefers boots over other suitable shoes, excludes open sandals and slippers, and the shoe gap advises waterproofing',()=>{
+ const boot={id:1,category:'鞋履',name:'棕色切尔西短靴'},sneaker={id:2,category:'鞋履',name:'白色休闲鞋'},top={id:3,category:'上装',name:'米白长袖针织上衣'},bottom={id:4,category:'下装',name:'深灰直筒长裤'};
+ const wardrobe=[boot,sneaker,top,bottom];
+ const dry=new Set(),wet=new Set();
+ for(let variant=0;variant<6;variant++){
+  dry.add(suggest(wardrobe,[],{temperature:15,weather:'晴',style:'极简',variant}).items.find(i=>[1,2].includes(i.id)).id);
+  wet.add(suggest(wardrobe,[],{temperature:15,weather:'小雨',style:'极简',variant}).items.find(i=>[1,2].includes(i.id)).id);
+ }
+ assert.ok(dry.has(sneaker.id),'without rain the plain sneaker remains a valid choice across variants');
+ assert.deepEqual(wet,new Set([boot.id]),'rain or snow must consistently prefer the boot over the plain sneaker');
+ const sandal={id:5,category:'鞋履',name:'棕色凉鞋'},slipper={id:6,category:'鞋履',name:'米色拖鞋'};
+ for(const open of [sandal,slipper]){
+  const plan=suggest([open,top,bottom],[],{temperature:25,weather:'雨雪',style:'极简'});
+  assert.equal(plan.items.some(i=>i.id===open.id),false,'「'+open.name+'」must be excluded from the chosen outfit while raining or snowing');
+  const gap=plan.gaps.find(g=>g.category==='鞋履');
+  assert.ok(gap&&/防水/.test(gap.advice),'the missing-shoe gap must mention waterproofing when nothing suitable is owned');
+ }
+ assert.deepEqual(validate(suggest([top,bottom],[],{temperature:25,weather:'小雨',style:'极简'}),[top,bottom],{temperature:25,weather:'小雨'}),[]);
+});
 
 test('already selected thermal tights and umbrella are used without duplicate suggested purchases',()=>{
  const clothes=[{id:1,category:'配饰',name:'深灰保暖连裤袜'},{id:2,category:'配饰',name:'折叠雨伞'}];

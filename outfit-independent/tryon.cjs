@@ -98,9 +98,6 @@ async function generateTryon({db,owner,plan,env,fetchImpl=fetch}){
   let image;
   let tryonNote;
   if(config.local){
-    const ref=require('./public/look-reference.js');
-    const files=require('node:fs');
-    const nodePath=require('node:path');
     const steps=[];
     const apparel=[...items,...plan.gaps].filter(piece=>['上装','下装','外套','连衣裙'].includes(piece.category));
     const staged=apparel.some(piece=>piece.category==='连衣裙')
@@ -110,8 +107,8 @@ async function generateTryon({db,owner,plan,env,fetchImpl=fetch}){
       const candidates=kinds.flatMap(kind=>apparel.filter(piece=>piece.category===kind));
       for(const piece of candidates){
         const kind=piece.category;
-        const asset=piece.id?null:ref.referenceAsset(piece);
-        const data=piece.id?localPieces.find(record=>record.item.id===piece.id)?.data:asset&&files.readFileSync(nodePath.join(__dirname,'public',asset.src));
+        // No stock or AI-generated reference photo exists for proposed pieces; only owned photographed items can be used.
+        const data=piece.id?localPieces.find(record=>record.item.id===piece.id)?.data:null;
         if(!data)continue;
         steps.push({category:kind==='连衣裙'?'one-pieces':kind==='下装'?'bottoms':'tops',data,piece});
         break;

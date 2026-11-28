@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {createApp}=require('../server.cjs');
 const {normalizePlan,settings}=require('../tryon.cjs');
-const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=','base64');
 test('personal try-on uses owned face/body/garments, requires consent, and privately saves output',async t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'outfit-tryon-test-'));let calls=0;
  const app=createApp({dataDir:dir,env:{IMAGE_API_KEY:'synthetic-test-only-key'},imageFetch:async(url,options)=>{

@@ -15,9 +15,12 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
-    "sharp": "~0.34.5"
+    "sharp": "~0.35.5"
   },
   "devDependencies": {
     "jsdom": "31.0.1"
+  },
+  "overrides": {
+    "sharp": "$sharp"
   }
 }

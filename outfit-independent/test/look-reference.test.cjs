@@ -1,17 +1,15 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const sharp=require('sharp');
-const {illustration,referenceAsset,boardHtml,posterSvg,itemHtml,color,parts}=require('../public/look-reference.js');
+const {illustration,boardHtml,posterSvg,itemHtml,color,parts}=require('../public/look-reference.js');
 async function pixels(item){
   const {data,info}=await sharp(Buffer.from(illustration(item))).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   return (x,y)=>data[(y*info.width+x)*4+3];
 }
 
-test('explicit garment color takes precedence over coordination advice and mismatched stock references are not used',()=>{
+test('explicit garment color takes precedence over coordination advice',()=>{
  assert.equal(color({name:'藏蓝短裙',advice:'搭配奶白上衣和白色袜子'}),'#29384e');
  assert.equal(color({name:'米白圆领针织上衣',color:'黑色'}),'#303135');
- assert.equal(referenceAsset({name:'米白圆领针织上衣',color:'黑色'}),null);
- assert.equal(referenceAsset({name:'浅蓝直筒牛仔裤',color:'深蓝'}),null);
 });
 test('the complete reference board includes all supported owned and proposed pieces',()=>{
  const plan={items:Array.from({length:9},(_,i)=>({id:i+1,name:'已有单品'+i,category:'上装'})),gaps:Array.from({length:9},(_,i)=>({name:'补充单品'+i,category:'配饰'}))};
@@ -35,13 +33,15 @@ test('short-sleeved shirts and long-sleeved knitwear have different sleeve cover
   for(const [x,y]of [[80,185],[225,190]]){assert.equal(shirt(x,y),0,'short sleeve must not reach the forearm');assert.ok(knit(x,y)>240,'long sleeve must cover the forearm');}
   assert.equal(illustration({name:'浅蓝短袖衬衫'}),illustration({name:'浅蓝短袖衬衫',category:'上装'}));
 });
-test('reference assets remain matched by garment type and owned photos take priority',()=>{
-  assert.equal(referenceAsset({name:'浅蓝高腰直筒牛仔裤'}).src,'reference-light-blue-jeans-v1.png');
-  assert.equal(referenceAsset({name:'浅蓝直筒牛仔半身裙'}),null,'a denim skirt must never reuse the jeans photo');
-  assert.equal(referenceAsset({name:'米白圆领针织上衣'}).src,'reference-cream-knit-v1.png');
+test('proposed pieces are always drawn outlines, never photos; owned photos are shown as photos',()=>{
+  const gap={name:'浅蓝高腰直筒牛仔裤',category:'下装'};
+  assert.match(itemHtml(gap),/<svg[\s\S]*款式轮廓示意 · 非真实商品/);
+  assert.equal(/<img/.test(itemHtml(gap)),false);
+  const planWithGap=boardHtml({items:[],gaps:[gap]},()=>'');
+  assert.equal(/<img/.test(planWithGap),false);assert.ok(planWithGap.includes('待补款式 · 示意'));assert.equal(planWithGap.includes('AI'),false);
   const item={name:'米白圆领针织上衣',category:'上装',image_path:'users/synthetic/wardrobe/item.png'};
   const html=boardHtml({items:[item],gaps:[]},()=>'/api/files?path=synthetic-owned-photo');
-  assert.ok(html.includes('/api/files?path=synthetic-owned-photo'));assert.ok(html.includes('我的衣橱 · 实拍'));assert.equal(html.includes('reference-cream-knit-v1.png'),false);
+  assert.ok(html.includes('/api/files?path=synthetic-owned-photo'));assert.ok(html.includes('我的衣橱 · 实拍'));
   const skirt={name:'藏蓝高腰 A 字短裙',category:'下装'};
   assert.ok(posterSvg({gaps:[skirt]}).includes('<svg x="80" y="5" width="300" height="280"'),'poster export must still embed the same garment illustration');
 });

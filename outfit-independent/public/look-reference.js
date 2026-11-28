@@ -2,20 +2,8 @@
 (function(root){
   'use strict';
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function referenceAsset(item){
-    var s=String(item.name||'')+' '+String(item.color||'');
-    var actualColor=color(item);
-    var id='';
-    if(/米白|奶白|乳白/.test(s)&&/圆领/.test(s)&&/针织|毛衣/.test(s)&&!/开衫|高领|短袖|条纹/.test(s))id='cream-knit';
-    else if(/浅蓝|淡蓝|浅色/.test(s)&&/牛仔/.test(s)&&/直筒/.test(s)&&/裤/.test(s)&&!/裙|破洞|短裤|喇叭|紧身/.test(s))id='light-blue-jeans';
-    else if(/白/.test(s)&&/运动鞋|小白鞋|板鞋|休闲鞋/.test(s)&&!/黑|红|高帮|厚底/.test(s))id='white-sneakers';
-    else if(/浅灰|淡灰/.test(s)&&/腋下包|肩包|弯月包/.test(s)&&!/托特|斜挎|双肩/.test(s))id='light-grey-bag';
-    var expected={'cream-knit':'#eee6d5','light-blue-jeans':'#a5c3d6','white-sneakers':'#f4f3ef','light-grey-bag':'#a4a29f'};
-    return id&&actualColor===expected[id]?{src:'reference-'+id+'-v1.png',label:'AI 款式参考'}:null;
-  }
   function itemHtml(item){
-    var ref=referenceAsset(item);
-    return '<figure class="gap-reference"><div class="gap-reference-image">'+(ref?'<a href="'+ref.src+'" target="_blank" rel="noopener" aria-label="放大'+esc(item.name)+'参考图"><img src="'+ref.src+'" alt="'+esc(item.name)+'的 AI 款式参考图" loading="eager" width="1254" height="1254"></a>':illustration(item))+'</div><figcaption>'+(ref?ref.label:'款式轮廓示意')+' · 非真实商品</figcaption></figure>';
+    return '<figure class="gap-reference"><div class="gap-reference-image">'+illustration(item)+'</div><figcaption>款式轮廓示意 · 非真实商品</figcaption></figure>';
   }
   function color(item){
     var colors=[[/米白|奶白|乳白/,'#eee6d5'],[/白/,'#f4f3ef'],[/深灰|炭灰/,'#575a5b'],[/灰/,'#a4a29f'],[/黑/,'#303135'],[/深棕|巧克力/,'#604737'],[/驼|卡其|米色/,'#c1a47e'],[/棕|咖/,'#9a7155'],[/藏蓝|深蓝|海军蓝/,'#29384e'],[/浅蓝|淡蓝/,'#a5c3d6'],[/牛仔|蓝/,'#58738b'],[/绿/,'#7c8871'],[/粉/,'#d3aaa7'],[/酒红|枣红/,'#743344'],[/红/,'#a95f54'],[/紫/,'#a598ae'],[/黄/,'#d2b77c']];
@@ -79,16 +67,14 @@
   function parts(plan){
     return (plan.items||[]).map(function(i){return Object.assign({},i,{origin:'owned'});}).concat((plan.gaps||[]).map(function(i){return Object.assign({},i,{origin:'gap'});})).slice(0,18);
   }
-  function sourceLabel(item,hasPhoto,generated){return generated?'待补款式 · AI 参考':item.origin==='gap'?'待补款式 · 示意':hasPhoto?'我的衣橱 · 实拍':'我的衣橱 · 款式示意';}
+  function sourceLabel(item,hasPhoto){return item.origin==='gap'?'待补款式 · 示意':hasPhoto?'我的衣橱 · 实拍':'我的衣橱 · 款式示意';}
   function boardHtml(plan,resolve){
     var list=parts(plan);
     if(!list.length)return '<p class="hint">这套方案暂未包含可展示的单品，请重新生成。</p>';
     return '<div class="outfit-board">'+list.map(function(item){
       var url=item.origin==='owned'&&item.image_path?resolve(item.image_path):'';
-      var ref=!url&&item.origin==='gap'?referenceAsset(item):null;
-      if(ref)url=ref.src;
       var visual=url?'<img src="'+esc(url)+'" alt="'+esc(item.name)+'" loading="eager">':illustration(item);
-      return '<figure class="board-piece '+(url?'photo':'reference')+'"><div class="board-image">'+visual+'</div><figcaption><span class="board-source">'+sourceLabel(item,!!url,!!ref)+'</span><b>'+esc(item.name)+'</b><small>'+esc(item.category)+'</small></figcaption></figure>';
+      return '<figure class="board-piece '+(url?'photo':'reference')+'"><div class="board-image">'+visual+'</div><figcaption><span class="board-source">'+sourceLabel(item,!!url)+'</span><b>'+esc(item.name)+'</b><small>'+esc(item.category)+'</small></figcaption></figure>';
     }).join('')+'</div>';
   }
   function posterSvg(plan,photos){
@@ -96,15 +82,14 @@
     var svg='<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="'+height+'" viewBox="0 0 1080 '+height+'"><rect width="1080" height="'+height+'" fill="#fcf8ef"/><g font-family="Microsoft YaHei,PingFang SC,sans-serif"><text x="60" y="70" font-size="22" fill="#916538">OUTFIT MIRROR · 穿搭魔镜</text><text x="60" y="139" font-size="42" font-weight="700" fill="#463525">'+esc(String(plan.title||'今天穿这一套').slice(0,24))+'</text><text x="60" y="191" font-size="24" fill="#8c7760">'+esc([plan.style,plan.occasion,plan.temperature!=null?plan.temperature+'°C':'',plan.weather].filter(Boolean).join(' · '))+'</text><text x="60" y="244" font-size="21" fill="#8c7760">衣橱实拍与待补款式分开标注，按这张图看整套组合</text>';
     list.forEach(function(item,index){
       var x=60+(index%2)*490,y=290+Math.floor(index/2)*415;
-      var ref=item.origin==='gap'?referenceAsset(item):null;
-      var photo=photos&&photos[ref?ref.src:item.image_path],ok=typeof photo==='string'&&/^data:image\/(png|jpe?g|webp|avif|gif);base64,/.test(photo);
+      var photo=photos&&photos[item.image_path],ok=typeof photo==='string'&&/^data:image\/(png|jpe?g|webp|avif|gif);base64,/.test(photo);
       svg+='<g transform="translate('+x+' '+y+')"><rect width="460" height="390" rx="24" fill="#fff" stroke="#eadcc6"/>';
       svg+=ok?'<image x="25" y="15" width="410" height="278" preserveAspectRatio="xMidYMid meet" href="'+photo+'"/>':illustration(item).replace('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">','<svg x="80" y="5" width="300" height="280" viewBox="0 0 300 300">');
-      svg+='<text x="24" y="314" font-size="18" fill="#9c6431">'+sourceLabel(item,ok,!!ref&&ok)+'</text><text x="24" y="350" font-size="24" font-weight="700" fill="#463525">'+esc(String(item.name||item.category||'单品').slice(0,16))+'</text><text x="24" y="375" font-size="17" fill="#9a8875">'+esc(item.category)+'</text></g>';
+      svg+='<text x="24" y="314" font-size="18" fill="#9c6431">'+sourceLabel(item,ok)+'</text><text x="24" y="350" font-size="24" font-weight="700" fill="#463525">'+esc(String(item.name||item.category||'单品').slice(0,16))+'</text><text x="24" y="375" font-size="17" fill="#9a8875">'+esc(item.category)+'</text></g>';
     });
     svg+='<text x="60" y="'+(height-70)+'" font-size="20" fill="#8c7760">参考图用于搭配组合；示意部分不代表真实商品或真人试穿。</text><text x="60" y="'+(height-34)+'" font-size="18" fill="#8c7760">'+esc(new Date(plan.createdAt||Date.now()).toLocaleDateString('zh-CN'))+' · 穿搭魔镜</text></g></svg>';
     return svg;
   }
-  var api={color:color,illustration:illustration,parts:parts,boardHtml:boardHtml,posterSvg:posterSvg,referenceAsset:referenceAsset,itemHtml:itemHtml};
+  var api={color:color,illustration:illustration,parts:parts,boardHtml:boardHtml,posterSvg:posterSvg,itemHtml:itemHtml};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.OutfitReference=api;
 })(typeof window!=='undefined'?window:globalThis);
