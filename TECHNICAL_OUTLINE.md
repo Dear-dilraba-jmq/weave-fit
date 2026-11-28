@@ -103,6 +103,8 @@ flowchart LR
 | --- | --- |
 | `index.html` | 页面结构与文案：顶栏（含登录 / 注册或昵称 / 退出）、首屏、宣言区、风格卡、四个功能（拍照入橱、看天穿衣、自己滑着搭、我的衣橱与个人档案）、隐私、常见问题、开始使用、页脚署名；内容安全策略 |
 | `login.html` · `register.html` | 登录（选账号、密码、忘记密码用找回码重设）与注册（昵称、密码、显示一次找回码）；全屏人物照背景，版式与首屏一致 |
+| `download.html` | 下载页（恢复自旧版产品官网首页，提交 `c14974b`）：想在自己电脑上运行完整 App 的人看这里，含步骤、GitHub / ZIP 链接和可复制的启动命令，并链回网页版；有自己的内容安全策略（只允许本站） |
+| `homepage/download.css` · `homepage/download.js` | 下载页专用的样式与交互，来自旧版 `home.css` / `home.js`；与网页版的 `home.css` / `home.js` 互不加载，不共用选择器 |
 | `homepage/home.css` | ALP1NE 版式（胶囊、首屏、宣言区、风格卡）、功能面板、个人档案、登录 / 注册页、响应式与「减少动态效果」 |
 | `homepage/home.js` | 滚动驱动的画面（一个 rAF 循环）、示例衣橱数据、账号状态与跨标签页同步、拍照入橱（含按需加载识别）、看天穿衣、自己滑着搭、我的衣橱 / 搭配收藏 / 个人档案与账号安全、参考图、备份导出与导入、照片署名 |
 | `homepage/store.js` | IndexedDB `weave-fit-web` 第 2 版（`people`、`items`、`looks`）的读写与本机账号：注册、登录、找回码、修改密码、删除账号、会话 |
@@ -110,7 +112,7 @@ flowchart LR
 | `homepage/recognize.js` | ES 模块，按需加载：固定版本的 transformers.js、SegFormer 与 CLIP 视觉模型（浏览器缓存），用 `garment-rules.js` 的流程输出自动填写结果和白底 JPEG |
 | `homepage/clip-type-vectors.json` | 44 个款式描述「a photo of …」的 CLIP 文字向量（Float32、base64，logit scale 100），由 `outfit-independent/scripts/export-type-vectors.cjs` 用本机模型生成 |
 | `homepage/photos/` | 18 张示例单品缩略图 `item-编号.jpg`（Unsplash）；9 张人物形象照 `look-*.webp`；7 张透明背景的拼贴单品图 `piece-*.webp`；2 张登录 / 注册页背景 `auth-*.webp` |
-| `scripts/build-pages.cjs` | 把三个页面及依赖同步到 `docs/`（先清空 `docs/homepage/` 与 `docs/outfit-independent/`） |
+| `scripts/build-pages.cjs` | 把四个页面及依赖同步到 `docs/`（先清空 `docs/homepage/` 与 `docs/outfit-independent/`） |
 
 ## 5. 数据模型
 

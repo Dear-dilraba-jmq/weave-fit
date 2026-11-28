@@ -32,6 +32,7 @@
 ```text
 index.html              网页版主页（打开就能用：首屏、风格卡与全部衣橱功能）
 login.html register.html 网页版的登录 / 注册页（含忘记密码、找回码）
+download.html           下载页：想在自己电脑上运行完整 App 的人看这里（步骤、GitHub / ZIP 链接、启动命令）；样式和脚本是 homepage/download.css、download.js
 homepage/               网页版代码与照片：
   home.css                样式（主页与登录 / 注册页共用）
   home.js                 主页交互：滚动画面、拍照入橱、看天穿衣、自己滑着搭、衣橱、个人档案、参考图、备份
@@ -97,9 +98,9 @@ Pages 发布来源为 `main` 分支的 `/docs`。修改主页后运行：
 node scripts/build-pages.cjs
 ```
 
-将更新后的根目录页面和 `docs/` 一起提交即可。发布目录只包含网页版的三个页面、代码、款式向量、照片和图标，不含任何账号或个人数据。本地预览可在仓库根目录启动任意静态服务器，例如 `python -m http.server 8765`，再打开 `http://127.0.0.1:8765/`。账号（浏览器的 WebCrypto）、自动识别和复制找回码都需要安全来源：HTTPS，或本机的 `127.0.0.1` / `localhost`；用局域网 IP 的 http 地址在手机上预览时，页面会提示账号功能不可用，也不能直接双击打开 HTML 文件。
+将更新后的根目录页面和 `docs/` 一起提交即可。发布目录只包含网页版的四个页面（主页、登录、注册、下载）、代码、款式向量、照片和图标，不含任何账号或个人数据。本地预览可在仓库根目录启动任意静态服务器，例如 `python -m http.server 8765`，再打开 `http://127.0.0.1:8765/`。账号（浏览器的 WebCrypto）、自动识别和复制找回码都需要安全来源：HTTPS，或本机的 `127.0.0.1` / `localhost`；用局域网 IP 的 http 地址在手机上预览时，页面会提示账号功能不可用，也不能直接双击打开 HTML 文件。
 
-网页版的照片保存在 `homepage/photos/`（18 张示例单品照片、9 张人物形象照、7 张拼贴单品图、2 张登录 / 注册页背景，约 2.5 MB），由 `build-pages.cjs` 一并发布，不依赖外部图床；替换或新增照片的做法见 [WORKFLOW.md 3.5](WORKFLOW.md#35-项目主页开发)。识别模型不随网页发布：访客同意后由浏览器从 Hugging Face（或国内镜像 hf-mirror.com）按固定版本下载，推理库 transformers.js 从 jsDelivr 按固定版本加载；页面用内容安全策略只允许这些来源的脚本。
+网页版的照片保存在 `homepage/photos/`（18 张示例单品照片、9 张人物形象照、7 张拼贴单品图、2 张登录 / 注册页背景，另有下载页用的 4 张抠图 `cutout-*.jpg` 和 5 张拍照入橱图 `scan-*.jpg`，约 3.2 MB），由 `build-pages.cjs` 一并发布，不依赖外部图床；替换或新增照片的做法见 [WORKFLOW.md 3.5](WORKFLOW.md#35-项目主页开发)。识别模型不随网页发布：访客同意后由浏览器从 Hugging Face（或国内镜像 hf-mirror.com）按固定版本下载，推理库 transformers.js 从 jsDelivr 按固定版本加载；页面用内容安全策略只允许这些来源的脚本。
 
 GitHub Pages 是静态托管：网页版的账号、衣橱、自动识别、规则搭配、三行滑动、收藏、参考图与备份都在访客的浏览器里运行，不需要后台。完整 App 的 SQLite 账号、跨设备访问、文字 AI、本人穿搭图和淘宝商品卡仍需要上述本地后台，或另行部署到支持持久存储的服务器。[GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
 

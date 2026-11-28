@@ -224,12 +224,12 @@ npm start                                # 或 node launch.cjs（显示局域网
 
 ```sh
 node scripts/build-pages.cjs
-git add index.html login.html register.html homepage docs
+git add index.html login.html register.html download.html homepage docs
 git commit -m "Update project homepage"
 git push
 ```
 
-- `build-pages.cjs` 会重建 `docs/homepage/` 和 `docs/outfit-independent/`，复制三个页面及其依赖的脚本、款式向量与照片，并写入 `.nojekyll`；`docs/` 中的其他文件保持不变。
+- `build-pages.cjs` 会重建 `docs/homepage/` 和 `docs/outfit-independent/`，复制四个页面（含 `download.html`）及其依赖的脚本、款式向量与照片，并写入 `.nojekyll`；`docs/` 中的其他文件保持不变。
 - 仓库 Settings → Pages 选择 Deploy from a branch，分支 `main`，目录 `/docs`。
 - 发布目录不包含 `data/`、`.env`、模型或任何个人照片。
 - `homepage/photos/` 中的示例照片会一并复制到 `docs/homepage/photos/`，页面不依赖外部图床。
